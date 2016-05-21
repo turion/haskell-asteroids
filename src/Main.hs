@@ -32,12 +32,12 @@ main :: IO ()
 main = do
     t <- getCurrentTime
     timeRef <- newIORef t
-    let init        = putStrLn "Hello... wait for it..."
-        actuate _ x = when x (putStrLn "World!") >> return x
+    let init        = putStrLn "Bouncing Ball:"
+        actuate (pos, vel) x = when x (putStrLn ("pos: " ++ show pos ++ " | vel: " ++ show vel)) >> return False
         sense   _   = do
             now      <- getCurrentTime
             lastTime <- readIORef timeRef
             writeIORef timeRef now
             let dt = now `diffUTCTime` lastTime
             return (realToFrac dt, Just ())
-    reactimate init sense actuate $ twoSecondsPassed
+    reactimate init sense actuate $ bouncingBall 10
