@@ -33,7 +33,7 @@ main = do
     t <- getCurrentTime
     timeRef <- newIORef t
     let init        = putStrLn "Bouncing Ball:"
-        actuate (pos, vel) x = when x (putStrLn ("pos: " ++ show pos ++ " | vel: " ++ show vel)) >> return False
+        actuate x (pos, vel) = when x (putStrLn ("pos: " ++ show pos ++ " | vel: " ++ show vel)) >> return False
         sense   _   = do
             now      <- getCurrentTime
             lastTime <- readIORef timeRef
