@@ -5,6 +5,7 @@ import Control.Arrow
 import Data.IORef
 import Data.Time.Clock
 import FRP.Yampa
+import Graphics.UI.GLUT
 
 type Pos = Double
 type Vel = Double
@@ -24,16 +25,16 @@ fallingBall' y0 v0 = proc () -> do
 bouncingBall :: Pos -> SF()(Pos, Vel)
 bouncingBall y0 = bbAux y0 0.0
     where bbAux y0 v0 = switch(fallingBall' y0 v0) $ \(y, v) -> bbAux y (-v)
- 
-twoSecondsPassed :: SF () Bool
-twoSecondsPassed = time >>> arr (> 2)
+
+renderBall :: Pos -> IO()
 
 main :: IO ()
 main = do
     t <- getCurrentTime
     timeRef <- newIORef t
+    _window <- createWindow "Bouncing Ball"
     let init        = putStrLn "Bouncing Ball:"
-        actuate x (pos, vel) = when x (putStrLn ("pos: " ++ show pos ++ " | vel: " ++ show vel)) >> return False
+        actuate x (pos, vel) = when x (renderBall pos) >> return False
         sense   _   = do
             now      <- getCurrentTime
             lastTime <- readIORef timeRef
