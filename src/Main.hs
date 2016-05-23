@@ -25,9 +25,6 @@ bouncingBall :: Pos -> SF()(Pos, Vel)
 bouncingBall y0 = bbAux y0 0.0
     where bbAux y0 v0 = switch(fallingBall' y0 v0) $ \(y, v) -> bbAux y (-v)
  
-twoSecondsPassed :: SF () Bool
-twoSecondsPassed = time >>> arr (> 2)
-
 main :: IO ()
 main = do
     t <- getCurrentTime
