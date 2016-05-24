@@ -7,16 +7,27 @@ data Vector = Vector {
 
 -- e.g. Weapon or Shield useful for ship
 
-data Ship = Ship{
+data Object = Object{
     position :: Vector,
     velocity :: Vector
 } deriving (Show)
 
+data Level = Level{
+    user :: Object,
+    enemy :: [Object],
+    asteroid :: [Object]
+} deriving Show
+
+type Game = ([Level])
 
 -- for test purposes only
 main :: IO()
 main = do
-    putStrLn ("Our ship:" ++ show ship)
+    putStrLn ("Our ship:" ++ show ship ++ "Level:" ++ show level)
         where position = (Vector 1.0 2.0)
               velocity = (Vector 0.4 0.3)
-              ship = (Ship position velocity)
+              ship = (Object position velocity)
+              user = (Object position velocity)
+              enemy = [(Object position velocity)]
+              asteroid = [(Object position velocity)]
+              level = (Level user enemy asteroid)
