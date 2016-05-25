@@ -27,11 +27,17 @@ bouncingBall y0 = bbAux y0 0.0
     where bbAux y0 v0 = switch(fallingBall' y0 v0) $ \(y, v) -> bbAux y (-v)
 
 renderBall :: Pos -> IO()
+renderBall pos = do
+    clear[ColorBuffer]
+    renderPrimitive Points $ do
+        vertex $ (Vertex3 0 (realToFrac pos)   0 :: Vertex3 GLfloat)
+    flush
 
 main :: IO ()
 main = do
     t <- getCurrentTime
     timeRef <- newIORef t
+    (_progName, _args) <- getArgsAndInitialize
     _window <- createWindow "Bouncing Ball"
     let init        = putStrLn "Bouncing Ball:"
         actuate x (pos, vel) = when x (renderBall pos) >> return False
@@ -41,4 +47,4 @@ main = do
             writeIORef timeRef now
             let dt = now `diffUTCTime` lastTime
             return (realToFrac dt, Just ())
-    reactimate init sense actuate $ bouncingBall 10
+    reactimate init sense actuate $ bouncingBall 1
