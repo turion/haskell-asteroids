@@ -10,10 +10,10 @@ main :: IO ()
 main = do
   t <- getCurrentTime
   timeRef <- newIORef t
-  let init        = putStrLn "Hello... wait for it..."
+  let init = putStrLn "Hello... wait for it..."
       actuate _ x = when x (putStrLn "World!") >> return x
-      sense   _   = do
-        now      <- getCurrentTime
+      sense _  = do
+        now <- getCurrentTime
         lastTime <- readIORef timeRef
         writeIORef timeRef now
         let dt = now `diffUTCTime` lastTime
