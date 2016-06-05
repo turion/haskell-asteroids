@@ -5,6 +5,7 @@ import Control.Arrow
 import Data.IORef
 import Data.Time.Clock
 import FRP.Yampa
+import FRP.Yampa.Simulation
 import Graphics.UI.GLUT
 import Control.Concurrent
 
@@ -32,21 +33,35 @@ renderBall pos = do
     clear[ColorBuffer]
     renderPrimitive Points $ do
         vertex $ (Vertex3 0 (realToFrac pos)   0 :: Vertex3 GLfloat)
-    flush
-    threadDelay 500
+    swapBuffers
 
 main :: IO ()
 main = do
     t <- getCurrentTime
-    timeRef <- newIORef t
-    (_progName, _args) <- getArgsAndInitialize
-    _window <- createWindow "Bouncing Ball"
-    let init        = putStrLn "Bouncing Ball:"
-        actuate _ (pos, vel) = renderBall pos >> return False
-        sense   _   = do
-            now      <- getCurrentTime
-            lastTime <- readIORef timeRef
-            writeIORef timeRef now
-            let dt = now `diffUTCTime` lastTime
-            return (realToFrac dt, Just ())
-    reactimate init sense actuate $ bouncingBall 1
+    time <- newIORef t
+    handle <- reactInit (initGL) (\_ _ b -> b >> return False) mainSF 
+    displayCallback $= return()
+    idleCallback $= Just (idle time handle)
+    t' <- getCurrentTime
+    writeIORef time t'
+    mainLoop
+
+idle :: IORef (UTCTime) -> ReactHandle () (IO ()) -> IO()
+idle time handle = do
+    now <- getCurrentTime
+    before <- readIORef time
+    let deltaTime = realToFrac $ diffUTCTime now before
+    _ <- react handle (deltaTime, Nothing)
+    writeIORef time now
+    return ()
+
+
+mainSF :: SF () (IO ())
+mainSF = bouncingBall 1.0 >>^ \(pos, vel) -> renderBall pos
+
+initGL ::  IO ()
+initGL = do
+    getArgsAndInitialize
+    initialDisplayMode $= [DoubleBuffered]
+    createWindow       "Bouncing Ball!"
+    return ()
