@@ -1,56 +1,53 @@
-{-
-    Datatypes.hs
-    Chris, Liv Wilczewski
-    May 2016
--}
--- make module
+module Datatypes (
+  Ship
+  ) where
 
-type Vec = (Double, Double)
+data Vector = Vector {
+  x :: Double,
+  y :: Double
+  } deriving (Eq, Show)
 
-data Vector = Vector Vec
-    deriving Show
-    
--- data Vector = Vector { 
-    -- x :: Double, 
-    -- y :: Double
--- } deriving (Show)
 
--- e.g. Weapon or Shield useful for ship
+class Located a where
+  getLocation :: a -> Vector
 
-type Position = Vector
-type Velocity = Vector
+class Oriented a where
+  getOrientation :: a -> Vector
 
-data Object = Object Position Velocity
-    deriving Show
+class (Located a, Oriented a) => Displayable a where 
+  draw :: a -> IO()
 
--- data Object = Object{
-    -- position :: Vector,
-    -- velocity :: Vector
--- } deriving (Show)
+-- SHIP --
 
-type User = Object
-type Enemy = Object
-type Asteroid = Object
+data Ship = Ship {
+  sLocation :: Vector,
+  sVelocity :: Vector,
+  sOrientation :: Vector
+  } deriving (Eq, Show)
 
-data Level = Level User [Enemy] [Asteroid]
-    deriving Show
--- data Level = Level{
-    -- user :: Object,
-    -- enemy :: [Object],
-    -- asteroid :: [Object]
--- } deriving Show
+instance Located Ship where
+  getLocation = sLocation
 
-data Game = Game [Level]
-    deriving Show
+instance Oriented Ship where
+  getOrientation = sOrientation
 
--- for test purposes only
-main :: IO()
-main = do
-    putStrLn ("Our ship:" ++ show ship ++ "Level:" ++ show level)
-        where position = (Vector (1.0,2.0))
-              velocity = (Vector (0.4,0.3))
-              ship = (Object position velocity)
-              user = (Object position velocity)
-              enemy = [(Object position velocity)]
-              asteroid = [(Object position velocity)]
-              level = (Level user enemy asteroid)
+instance Displayable Ship where
+  draw ship = return ()
+
+
+-- ASTEROID --
+
+data Asteroid = Asteroid {
+  aLocation :: Vector,
+  aVelocity :: Vector,
+  aOrientation :: Vector
+}
+
+instance Located Asteroid where
+  getLocation = aLocation
+
+instance Oriented Asteroid where
+  getOrientation = aOrientation
+
+instance Displayable Asteroid where
+  draw asteroid = return ()

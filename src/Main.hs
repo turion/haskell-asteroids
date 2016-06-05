@@ -5,6 +5,7 @@ import Control.Arrow
 import Data.IORef
 import Data.Time.Clock
 import FRP.Yampa
+import Datatypes
 
 type Pos = Double
 type Vel = Double
