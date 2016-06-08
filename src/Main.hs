@@ -7,24 +7,24 @@ import Data.Time.Clock
 import FRP.Yampa
 import Datatypes
 
-type Pos = Double
-type Vel = Double
+type Location = Vector
+type Velocity = Vector
 
-fallingBall :: Pos -> Vel -> SF() (Pos, Vel)
-fallingBall y0 v0 = proc () -> do
-    v <- (v0+)^<< integral -< -9.81 -- gravity
-    y <- (y0+)^<< integral -< v
-    returnA -< (y,v)
+fallingBall :: Location -> Velocity -> SF() (Location, Velocity)
+fallingBall location velocity = proc () -> do
+    v <- ((y velocity)+)^<< integral -< -9.81 -- gravity
+    y <- ((y location)+)^<< integral -< v
+    returnA -< (Vector 0.0 y, Vector 0.0 v)
 
-fallingBall' :: Pos -> Vel -> SF()((Pos, Vel), Event(Pos, Vel))
-fallingBall' y0 v0 = proc () -> do
-    yv@(y, _) <- fallingBall y0 v0 -< ()
-    hit       <- edge              -< y <= 0
+fallingBall' :: Location -> Velocity -> SF()((Location, Velocity), Event(Location, Velocity))
+fallingBall' location velocity = proc () -> do
+    yv@(loc, _) <- fallingBall location velocity -< ()
+    hit       <- edge              -< y loc <= 0
     returnA -< (yv, hit `tag` yv)
 
-bouncingBall :: Pos -> SF()(Pos, Vel)
-bouncingBall y0 = bbAux y0 0.0
-    where bbAux y0 v0 = switch(fallingBall' y0 v0) $ \(y, v) -> bbAux y (-v)
+bouncingBall :: Location -> SF()(Location, Velocity)
+bouncingBall location = bbAux location (Vector 0.0 0.0)
+    where bbAux location velocity = switch(fallingBall' location velocity) $ \(y, (Vector vX vY)) -> bbAux y (Vector vX (-vY))
  
 main :: IO ()
 main = do
@@ -38,4 +38,5 @@ main = do
             writeIORef timeRef now
             let dt = now `diffUTCTime` lastTime
             return (realToFrac dt, Just ())
-    reactimate init sense actuate $ bouncingBall 10
+    reactimate init sense actuate $ bouncingBall (Vector 0.0 1.0)
+    
