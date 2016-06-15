@@ -46,7 +46,7 @@ movingBall    loc0         vel0         acc0             = proc () -> do
 
 -- Graphics
 
-idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle () (IO Location) -> IO()
+idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle () (IO()) -> IO()
 idle    input                   output              time               handle                         = do
     acceleration <- readIORef input
     now <- getCurrentTime
@@ -54,7 +54,7 @@ idle    input                   output              time               handle   
     let deltaTime = realToFrac $ diffUTCTime now before
     _ <- react handle (deltaTime, Nothing)
     let programOutput = acceleration
-    writeIORef output programOutput
+    --writeIORef output programOutput
     writeIORef time now
     postRedisplay Nothing    
     return ()
@@ -94,10 +94,10 @@ main = do
     output <- newIORef (Vector 0.0 0.0)
     t <- getCurrentTime
     time <- newIORef t
-    handle <- reactInit (initGL) (\_ _ b -> b >> return False) $ bouncingBall (Vector 0.0 1.0) >>^ \(location, velocity) -> return location
+    handle <- reactInit (initGL) (\_ _ b -> b >> return False) $ bouncingBall (Vector 0.0 1.0) >>^ \(location, velocity) -> writeIORef output location
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> writeIORef input (parseInput $ Event $ Keyboard key keyState modifiers))
-    displayCallback $= (readIORef output >>= renderBall)
     idleCallback $= Just (idle input output time handle)
+    displayCallback $= (readIORef output >>= renderBall)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
