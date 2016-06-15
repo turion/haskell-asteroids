@@ -20,19 +20,19 @@ type Acceleration = Vector
 
 -- Logic
 
-infinitelyFallingBall :: Location -> Velocity -> SF() (Location, Velocity)
-infinitelyFallingBall location velocity = proc () -> do
-    v <- ((y velocity)+)^<< integral -< -9.81 -- gravity
+infinitelyFallingBall :: Location -> Velocity -> SF(Acceleration) (Location, Velocity)
+infinitelyFallingBall location velocity = proc (acceleration) -> do
+    v <- ((y velocity)+)^<< integral -< -9.81 + (20 * y acceleration)-- gravity
     y <- ((y location)+)^<< integral -< v
     returnA -< (Vector 0.0 y, Vector 0.0 v)
 
-fallingBall :: Location -> Velocity -> SF()((Location, Velocity), Event(Location, Velocity))
-fallingBall location velocity = proc () -> do
-    yv@(loc, _) <- infinitelyFallingBall location velocity -< ()
+fallingBall :: Location -> Velocity -> SF(Acceleration)((Location, Velocity), Event(Location, Velocity))
+fallingBall location velocity = proc (acceleration) -> do
+    yv@(loc, _) <- infinitelyFallingBall location velocity -< (acceleration)
     hit       <- edge              -< y loc <= 0
     returnA -< (yv, hit `tag` yv)
 
-bouncingBall :: Location -> SF()(Location, Velocity)
+bouncingBall :: Location -> SF (Acceleration) (Location, Velocity)
 bouncingBall location = bbAux location (Vector 0.0 0.0)
     where bbAux location velocity = switch(fallingBall location velocity) $ \(y, (Vector vX vY)) -> bbAux y (Vector vX (-vY * 9 / 10))
 
@@ -46,15 +46,13 @@ movingBall    loc0         vel0         acc0             = proc () -> do
 
 -- Graphics
 
-idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle () (IO()) -> IO()
+idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle Acceleration (Location, Velocity) -> IO()
 idle    input                   output              time               handle                         = do
     acceleration <- readIORef input
     now <- getCurrentTime
     before <- readIORef time
     let deltaTime = realToFrac $ diffUTCTime now before
-    _ <- react handle (deltaTime, Nothing)
-    let programOutput = acceleration
-    --writeIORef output programOutput
+    _ <- react handle (deltaTime, Just acceleration)
     writeIORef time now
     postRedisplay Nothing    
     return ()
@@ -65,6 +63,7 @@ initGL = do
     initialDisplayMode $= [DoubleBuffered]
     createWindow       "Bouncing Ball!"
     return ()
+    
  
 renderBall :: Location -> IO()
 renderBall location = do
@@ -94,10 +93,16 @@ main = do
     output <- newIORef (Vector 0.0 0.0)
     t <- getCurrentTime
     time <- newIORef t
-    handle <- reactInit (initGL) (\_ _ b -> b >> return False) $ bouncingBall (Vector 0.0 1.0) >>^ \(location, velocity) -> writeIORef output location
+    initGL
+    handle <- reactInit (return (Vector 0.0 0.0)) (actuator output) $ bouncingBall (Vector 0.0 1.0)
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> writeIORef input (parseInput $ Event $ Keyboard key keyState modifiers))
     idleCallback $= Just (idle input output time handle)
     displayCallback $= (readIORef output >>= renderBall)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
+
+--actuator :: IORef Vector -> 
+actuator output _ _ (location, velocity) = do
+    writeIORef output location
+    return False
