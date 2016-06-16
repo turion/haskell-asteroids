@@ -15,7 +15,7 @@ data Vector = Vector {
 
 type Location = Vector
 type Velocity = Vector
-type Acceleration = Vector
+type Acceleration = Double
 type Orientation = Double
 
 data GameObjectType = Ship | Asteroid 
