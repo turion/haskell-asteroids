@@ -67,8 +67,11 @@ initGL     = do
 renderBall :: Location -> IO()
 renderBall    location    = do
     clear[ColorBuffer]
-    renderPrimitive Points $ do
-        vertex $ (Vertex3 (realToFrac (x location)) (realToFrac (y location)) 0 :: Vertex3 GLfloat)
+    renderPrimitive Polygon $ do
+        vertex $ (Vertex3 (realToFrac (x location))           (realToFrac (0.1 + y location))     0 :: Vertex3 GLfloat)
+        vertex $ (Vertex3 (realToFrac (0.05 + x location))    (realToFrac ((-0.05) + y location)) 0 :: Vertex3 GLfloat)
+        vertex $ (Vertex3 (realToFrac (x location))           (realToFrac (y location))           0 :: Vertex3 GLfloat)
+        vertex $ (Vertex3 (realToFrac ((-0.05) + x location)) (realToFrac ((-0.05) + y location)) 0 :: Vertex3 GLfloat)
     swapBuffers
 
 
