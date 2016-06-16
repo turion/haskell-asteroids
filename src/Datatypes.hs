@@ -4,7 +4,8 @@ module Datatypes (
   GameObject(..),
   Location,
   Velocity,
-  Acceleration
+  Acceleration,
+  Orientation
   ) where
 
 data Vector = Vector {
@@ -12,18 +13,19 @@ data Vector = Vector {
   y :: Double
   } deriving (Eq, Show)
 
+type Location = Vector
+type Velocity = Vector
+type Acceleration = Vector
+type Orientation = Double
 
 data GameObjectType = Ship | Asteroid 
   deriving Show
 
 data GameObject = GameObject {
-  location :: Vector,
-  orientation :: Vector,
-  velocity :: Vector,
+  location :: Location,
+  orientation :: Orientation,
+  velocity :: Velocity,
   gameObjectType :: GameObjectType
   }
 
 
-type Location = Vector
-type Velocity = Vector
-type Acceleration = Vector

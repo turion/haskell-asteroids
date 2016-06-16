@@ -16,23 +16,23 @@ import UI
 
 -- Logic
 
-infinitelyFallingBall :: Location -> Velocity -> SF(Acceleration) (Location, Velocity)
-infinitelyFallingBall    location    velocity    = proc (acceleration) -> do
+infinitelyFallingBall :: Location -> Velocity -> Orientation -> SF(Acceleration) (Location, Velocity, Orientation)
+infinitelyFallingBall    location    velocity    orientation    = proc (acceleration) -> do
     vX <- ((x velocity)+)^<< integral -< (x acceleration)
     vY <- ((y velocity)+)^<< integral -< -9.81 + (20 * y acceleration) -- gravity + input
     x  <- ((x location)+)^<< integral -< vX
     y  <- ((y location)+)^<< integral -< vY
-    returnA -< (Vector x y, Vector vX vY)
+    returnA -< (Vector x y, Vector vX vY, 0.0)
 
-fallingBall :: Location -> Velocity -> SF(Acceleration)((Location, Velocity), Event(Location, Velocity))
-fallingBall    location    velocity    = proc (acceleration) -> do
-    yv@(loc, _) <- infinitelyFallingBall location velocity -< (acceleration)
-    hit         <- edge                                    -< y loc <= 0
-    returnA     -< (yv, hit `tag` yv)
+fallingBall :: Location -> Velocity -> Orientation -> SF(Acceleration)((Location, Velocity, Orientation), Event(Location, Velocity, Orientation))
+fallingBall    location    velocity    orientation    = proc (acceleration) -> do
+    object@(loc, _, _) <- infinitelyFallingBall location velocity orientation -< (acceleration)
+    hit         <- edge                                                       -< y loc <= 0
+    returnA     -< (object, hit `tag` object)
 
-bouncingBall :: Location -> SF (Acceleration) (Location, Velocity)
-bouncingBall    location    = bbAux location (Vector 0.0 0.0)
-    where bbAux location velocity = switch(fallingBall location velocity) $ \(y, (Vector vX vY)) -> bbAux y (Vector vX (-vY * 9 / 10))
+bouncingBall :: Location -> SF (Acceleration) (Location, Velocity, Orientation)
+bouncingBall    location    = bbAux location (Vector 0.0 0.0) 0.0
+    where bbAux location velocity orientation = switch(fallingBall location velocity orientation) $ \(loc, (Vector vX vY), ori) -> bbAux loc (Vector vX (-vY * 9 / 10)) ori
 
 movingBall :: Location ->  Velocity ->  Acceleration ->  SF()(Location, Velocity, Acceleration)
 movingBall    loc0         vel0         acc0             = proc () -> do
@@ -45,9 +45,9 @@ movingBall    loc0         vel0         acc0             = proc () -> do
 
 -- Graphics
 
-idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle Acceleration (Location, Velocity) -> IO()
-idle    input                   output              time               handle                                           = do
-    acceleration <- readIORef input
+idle :: IORef (Acceleration, Orientation) -> IORef (UTCTime) -> ReactHandle Acceleration (Location, Velocity, Orientation) -> IO()
+idle    input                                time               handle                                                        = do
+    (acceleration, orientation) <- readIORef input
     now <- getCurrentTime
     before <- readIORef time
     let deltaTime = realToFrac $ diffUTCTime now before
@@ -64,14 +64,17 @@ initGL     = do
     return ()
     
  
-renderBall :: Location -> IO()
-renderBall    location    = do
+render :: (Location, Orientation) -> IO()
+render    (location, orientation)    = do
     clear[ColorBuffer]
-    renderPrimitive Polygon $ do
-        vertex $ (Vertex3 (realToFrac (x location))           (realToFrac (0.1 + y location))     0 :: Vertex3 GLfloat)
-        vertex $ (Vertex3 (realToFrac (0.05 + x location))    (realToFrac ((-0.05) + y location)) 0 :: Vertex3 GLfloat)
-        vertex $ (Vertex3 (realToFrac (x location))           (realToFrac (y location))           0 :: Vertex3 GLfloat)
-        vertex $ (Vertex3 (realToFrac ((-0.05) + x location)) (realToFrac ((-0.05) + y location)) 0 :: Vertex3 GLfloat)
+    preservingMatrix $ do
+        rotate (realToFrac orientation :: GLfloat) $ Vector3 0 0 1
+        translate $ (Vector3 (realToFrac (x location):: GLfloat) (realToFrac (y location):: GLfloat) 0)
+        renderPrimitive Polygon $ do
+            vertex $ (Vertex3   0.00    0.10  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3   0.05  (-0.05) 0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3   0.00    0.00  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 (-0.05) (-0.05) 0 :: Vertex3 GLfloat)
     swapBuffers
 
 
@@ -79,20 +82,21 @@ renderBall    location    = do
 
 main :: IO ()
 main    = do
-    input <- newIORef (Vector 0.0 0.0)
-    output <- newIORef (Vector 0.0 0.0)
+    input <- newIORef (Vector 0.0 0.0, 0.0)
+    output <- newIORef (Vector 0.0 0.0, 0.0)
     t <- getCurrentTime
     time <- newIORef t
     initGL
     handle <- reactInit (return (Vector 0.0 0.0)) (actuator output) $ bouncingBall (Vector 0.0 1.0)
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> writeIORef input (parseInput $ Event $ Keyboard key keyState modifiers))
-    idleCallback $= Just (idle input output time handle)
-    displayCallback $= (readIORef output >>= renderBall)
+    idleCallback $= Just (idle input time handle)
+    --(outputLoc, outputOr) <- (readIORef output, readIORef outputOrientation)
+    displayCallback $= (readIORef output >>= render)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
 
-actuator :: IORef Vector -> ReactHandle Vector (Location, Velocity) -> Bool -> (Location, Velocity) -> IO Bool
-actuator    output          _                                          _       (location, velocity)    = do
-    writeIORef output location
+actuator :: IORef (Vector, Double) -> ReactHandle Vector (Location, Velocity, Orientation) -> Bool -> (Location, Velocity, Orientation) -> IO Bool
+actuator    output          _                                                                 _       (location, velocity, orientation)    = do
+    writeIORef output (location, orientation)
     return False
