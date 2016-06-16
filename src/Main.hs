@@ -22,9 +22,11 @@ type Acceleration = Vector
 
 infinitelyFallingBall :: Location -> Velocity -> SF(Acceleration) (Location, Velocity)
 infinitelyFallingBall location velocity = proc (acceleration) -> do
-    v <- ((y velocity)+)^<< integral -< -9.81 + (20 * y acceleration)-- gravity
-    y <- ((y location)+)^<< integral -< v
-    returnA -< (Vector 0.0 y, Vector 0.0 v)
+    vX <- ((x velocity)+)^<< integral -< (x acceleration)
+    vY <- ((y velocity)+)^<< integral -< -9.81 + (20 * y acceleration) -- gravity + input
+    x <- ((x location)+)^<< integral -< vX
+    y <- ((y location)+)^<< integral -< vY
+    returnA -< (Vector x y, Vector vX vY)
 
 fallingBall :: Location -> Velocity -> SF(Acceleration)((Location, Velocity), Event(Location, Velocity))
 fallingBall location velocity = proc (acceleration) -> do
