@@ -1,7 +1,10 @@
 module Datatypes (
   Vector(..),
   GameObjectType,
-  GameObject(..)
+  GameObject(..),
+  Location,
+  Velocity,
+  Acceleration
   ) where
 
 data Vector = Vector {
@@ -19,3 +22,8 @@ data GameObject = GameObject {
   velocity :: Vector,
   gameObjectType :: GameObjectType
   }
+
+
+type Location = Vector
+type Velocity = Vector
+type Acceleration = Vector

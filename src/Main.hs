@@ -13,29 +13,25 @@ import Control.Concurrent
 import Datatypes
 import UI
 
-type Location = Vector
-type Velocity = Vector
-type Acceleration = Vector
-
 
 -- Logic
 
 infinitelyFallingBall :: Location -> Velocity -> SF(Acceleration) (Location, Velocity)
-infinitelyFallingBall location velocity = proc (acceleration) -> do
+infinitelyFallingBall    location    velocity    = proc (acceleration) -> do
     vX <- ((x velocity)+)^<< integral -< (x acceleration)
     vY <- ((y velocity)+)^<< integral -< -9.81 + (20 * y acceleration) -- gravity + input
-    x <- ((x location)+)^<< integral -< vX
-    y <- ((y location)+)^<< integral -< vY
+    x  <- ((x location)+)^<< integral -< vX
+    y  <- ((y location)+)^<< integral -< vY
     returnA -< (Vector x y, Vector vX vY)
 
 fallingBall :: Location -> Velocity -> SF(Acceleration)((Location, Velocity), Event(Location, Velocity))
-fallingBall location velocity = proc (acceleration) -> do
+fallingBall    location    velocity    = proc (acceleration) -> do
     yv@(loc, _) <- infinitelyFallingBall location velocity -< (acceleration)
-    hit       <- edge              -< y loc <= 0
-    returnA -< (yv, hit `tag` yv)
+    hit         <- edge                                    -< y loc <= 0
+    returnA     -< (yv, hit `tag` yv)
 
 bouncingBall :: Location -> SF (Acceleration) (Location, Velocity)
-bouncingBall location = bbAux location (Vector 0.0 0.0)
+bouncingBall    location    = bbAux location (Vector 0.0 0.0)
     where bbAux location velocity = switch(fallingBall location velocity) $ \(y, (Vector vX vY)) -> bbAux y (Vector vX (-vY * 9 / 10))
 
 movingBall :: Location ->  Velocity ->  Acceleration ->  SF()(Location, Velocity, Acceleration)
@@ -46,10 +42,11 @@ movingBall    loc0         vel0         acc0             = proc () -> do
     lY <- ((y loc0)+) ^<< integral -< vY
     returnA -< (Vector lX lY, Vector vX vY, Vector (x acc0) (y acc0))
 
+
 -- Graphics
 
 idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle Acceleration (Location, Velocity) -> IO()
-idle    input                   output              time               handle                         = do
+idle    input                   output              time               handle                                           = do
     acceleration <- readIORef input
     now <- getCurrentTime
     before <- readIORef time
@@ -60,7 +57,7 @@ idle    input                   output              time               handle   
     return ()
 
 initGL ::  IO ()
-initGL = do
+initGL     = do
     getArgsAndInitialize
     initialDisplayMode $= [DoubleBuffered]
     createWindow       "Bouncing Ball!"
@@ -68,29 +65,17 @@ initGL = do
     
  
 renderBall :: Location -> IO()
-renderBall location = do
+renderBall    location    = do
     clear[ColorBuffer]
     renderPrimitive Points $ do
         vertex $ (Vertex3 (realToFrac (x location)) (realToFrac (y location)) 0 :: Vertex3 GLfloat)
     swapBuffers
 
 
--- UI
-
-parseInput :: Event Input -> Acceleration
-parseInput    (Event (Keyboard (SpecialKey KeyUp)    (Down) _))   =  (Vector   0.0   1.0 )
-parseInput    (Event (Keyboard (SpecialKey KeyUp)    (Up)   _))   =  (Vector   0.0   0.0 )
-parseInput    (Event (Keyboard (SpecialKey KeyDown)  (Down) _))   =  (Vector   0.0 (-1.0))
-parseInput    (Event (Keyboard (SpecialKey KeyDown)  (Up)   _))   =  (Vector   0.0   0.0 )
-parseInput    (Event (Keyboard (SpecialKey KeyRight) (Down) _))   =  (Vector   1.0   0.0 )
-parseInput    (Event (Keyboard (SpecialKey KeyLeft)  (Down) _))   =  (Vector (-1.0)  0.0 )
-parseInput    _                                                   =  (Vector   0.0   0.0 )
-
-
 -- Main
 
 main :: IO ()
-main = do
+main    = do
     input <- newIORef (Vector 0.0 0.0)
     output <- newIORef (Vector 0.0 0.0)
     t <- getCurrentTime
@@ -104,7 +89,7 @@ main = do
     writeIORef time t'
     mainLoop
 
---actuator :: IORef Vector -> 
-actuator output _ _ (location, velocity) = do
+actuator :: IORef Vector -> ReactHandle Vector (Location, Velocity) -> Bool -> (Location, Velocity) -> IO Bool
+actuator    output          _                                          _       (location, velocity)    = do
     writeIORef output location
     return False
