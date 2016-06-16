@@ -11,67 +11,85 @@ import Graphics.UI.GLUT
 import Control.Concurrent
 -- Haskelloids
 import Datatypes
-
-type Location = Vector
-type Velocity = Vector
+import UI
 
 
--- Ball
+-- Logic
 
-infinitelyFallingBall :: Location -> Velocity -> SF() (Location, Velocity)
-infinitelyFallingBall location velocity = proc () -> do
-    v <- ((y velocity)+)^<< integral -< -9.81 -- gravity
-    y <- ((y location)+)^<< integral -< v
-    returnA -< (Vector 0.0 y, Vector 0.0 v)
+infinitelyFallingBall :: Location -> Velocity -> SF(Acceleration) (Location, Velocity)
+infinitelyFallingBall    location    velocity    = proc (acceleration) -> do
+    vX <- ((x velocity)+)^<< integral -< (x acceleration)
+    vY <- ((y velocity)+)^<< integral -< -9.81 + (20 * y acceleration) -- gravity + input
+    x  <- ((x location)+)^<< integral -< vX
+    y  <- ((y location)+)^<< integral -< vY
+    returnA -< (Vector x y, Vector vX vY)
 
-fallingBall :: Location -> Velocity -> SF()((Location, Velocity), Event(Location, Velocity))
-fallingBall location velocity = proc () -> do
-    yv@(loc, _) <- infinitelyFallingBall location velocity -< ()
-    hit       <- edge              -< y loc <= 0
-    returnA -< (yv, hit `tag` yv)
+fallingBall :: Location -> Velocity -> SF(Acceleration)((Location, Velocity), Event(Location, Velocity))
+fallingBall    location    velocity    = proc (acceleration) -> do
+    yv@(loc, _) <- infinitelyFallingBall location velocity -< (acceleration)
+    hit         <- edge                                    -< y loc <= 0
+    returnA     -< (yv, hit `tag` yv)
 
-bouncingBall :: Location -> SF()(Location, Velocity)
-bouncingBall location = bbAux location (Vector 0.0 0.0)
+bouncingBall :: Location -> SF (Acceleration) (Location, Velocity)
+bouncingBall    location    = bbAux location (Vector 0.0 0.0)
     where bbAux location velocity = switch(fallingBall location velocity) $ \(y, (Vector vX vY)) -> bbAux y (Vector vX (-vY * 9 / 10))
- 
-renderBall :: Location -> IO()
-renderBall location = do
-    clear[ColorBuffer]
-    renderPrimitive Points $ do
-        vertex $ (Vertex3 0 (realToFrac (y location))   0 :: Vertex3 GLfloat)
-    swapBuffers
+
+movingBall :: Location ->  Velocity ->  Acceleration ->  SF()(Location, Velocity, Acceleration)
+movingBall    loc0         vel0         acc0             = proc () -> do
+    vX <- ((x vel0)+) ^<< integral -< x acc0
+    vY <- ((y vel0)+) ^<< integral -< y acc0
+    lX <- ((x loc0)+) ^<< integral -< vX
+    lY <- ((y loc0)+) ^<< integral -< vY
+    returnA -< (Vector lX lY, Vector vX vY, Vector (x acc0) (y acc0))
+
 
 -- Graphics
 
-idle :: IORef (UTCTime) -> ReactHandle () (IO ()) -> IO()
-idle time handle = do
+idle :: IORef (Acceleration) -> IORef (Location) -> IORef (UTCTime) -> ReactHandle Acceleration (Location, Velocity) -> IO()
+idle    input                   output              time               handle                                           = do
+    acceleration <- readIORef input
     now <- getCurrentTime
     before <- readIORef time
     let deltaTime = realToFrac $ diffUTCTime now before
-    _ <- react handle (deltaTime, Nothing)
+    _ <- react handle (deltaTime, Just acceleration)
     writeIORef time now
+    postRedisplay Nothing    
     return ()
 
-
-mainSF :: SF () (IO ())
-mainSF = bouncingBall (Vector 0.0 1.0) >>^ \(location, velocity) -> renderBall location
-
 initGL ::  IO ()
-initGL = do
+initGL     = do
     getArgsAndInitialize
     initialDisplayMode $= [DoubleBuffered]
     createWindow       "Bouncing Ball!"
     return ()
+    
+ 
+renderBall :: Location -> IO()
+renderBall    location    = do
+    clear[ColorBuffer]
+    renderPrimitive Points $ do
+        vertex $ (Vertex3 (realToFrac (x location)) (realToFrac (y location)) 0 :: Vertex3 GLfloat)
+    swapBuffers
+
 
 -- Main
 
 main :: IO ()
-main = do
+main    = do
+    input <- newIORef (Vector 0.0 0.0)
+    output <- newIORef (Vector 0.0 0.0)
     t <- getCurrentTime
     time <- newIORef t
-    handle <- reactInit (initGL) (\_ _ b -> b >> return False) mainSF 
-    displayCallback $= return()
-    idleCallback $= Just (idle time handle)
+    initGL
+    handle <- reactInit (return (Vector 0.0 0.0)) (actuator output) $ bouncingBall (Vector 0.0 1.0)
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> writeIORef input (parseInput $ Event $ Keyboard key keyState modifiers))
+    idleCallback $= Just (idle input output time handle)
+    displayCallback $= (readIORef output >>= renderBall)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
+
+actuator :: IORef Vector -> ReactHandle Vector (Location, Velocity) -> Bool -> (Location, Velocity) -> IO Bool
+actuator    output          _                                          _       (location, velocity)    = do
+    writeIORef output location
+    return False
