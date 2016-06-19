@@ -11,11 +11,11 @@ data Vector = Vector {
 
 
 data GameObjectType = Ship | EnemyShip | Asteroid
-  deriving Show
+  deriving (Eq, Show)
 
 data GameObject = GameObject {
   location :: Vector,
-  orientation :: Vector,
   velocity :: Vector,
+  orientation :: Double,
   gameObjectType :: GameObjectType
   }
