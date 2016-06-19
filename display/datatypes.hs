@@ -4,18 +4,21 @@ module Datatypes (
   GameObject(..)
   ) where
 
+import Graphics.UI.GLUT
+
 data Vector = Vector {
-  x :: Double,
-  y :: Double
+  x :: GLfloat,
+  y :: GLfloat
   } deriving (Eq, Show)
 
 
 data GameObjectType = Ship | EnemyShip | Asteroid
-  deriving Show
+  deriving (Eq, Show)
 
 data GameObject = GameObject {
   location :: Vector,
-  orientation :: Vector,
   velocity :: Vector,
+  orientation :: GLfloat,
+  scaleObject :: GLfloat,
   gameObjectType :: GameObjectType
   }
