@@ -6,7 +6,7 @@ import Graphics.Rendering.OpenGL.GL.CoordTrans
 
 reshape :: ReshapeCallback
 reshape size = do
-  print size
+  -- print size
   viewport $= (Position 0 0, Size 900 900)
 
 keyboardMouse :: KeyboardMouseCallback
