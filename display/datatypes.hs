@@ -1,21 +1,33 @@
 module Datatypes (
   Vector(..),
   GameObjectType(..),
+  GameLevel(..),
   GameObject(..)
   ) where
 
+import Graphics.UI.GLUT
+
 data Vector = Vector {
-  x :: Double,
-  y :: Double
+  x :: GLfloat,
+  y :: GLfloat
   } deriving (Eq, Show)
 
 
-data GameObjectType = Ship | EnemyShip | Asteroid
+data GameObjectType = Ship | EnemyShip | Asteroid | Projectile | EnemyProjectile
   deriving (Eq, Show)
 
 data GameObject = GameObject {
   location :: Vector,
   velocity :: Vector,
-  orientation :: Double,
+  orientation :: GLfloat,
+  scaleObject :: GLfloat,
   gameObjectType :: GameObjectType
   }
+
+data GameLevel = GameLevel {
+  player :: GameObject,
+  enemies :: [GameObject],
+  asteroids :: [GameObject],
+  projectiles :: [GameObject],
+  enemyProjectiles :: [GameObject]
+}
