@@ -25,9 +25,9 @@ data GameInput = GameInput {
 
 
 handleInput :: IORef GameInput -> Event UserInput -> IO ()
-handleInput    oldGameInput       newInput       = do
-    oldInput <- readIORef oldGameInput
-    writeIORef oldGameInput $ GameInput (parseAcceleration oldInput newInput) (parseOrientation oldInput newInput)
+handleInput    gameInput       userInput       = do
+    oldInput <- readIORef gameInput
+    writeIORef gameInput $ GameInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
     return ()    
 
 parseAcceleration :: GameInput -> Event UserInput ->                                    Acceleration

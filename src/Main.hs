@@ -32,8 +32,8 @@ createShip    location    = movingShip location (Vector 0.0 0.0) 0.0
 -- Graphics
 
 idle :: IORef (GameInput) -> IORef (UTCTime) -> ReactHandle GameInput (Location, Velocity, Orientation) -> IO()
-idle    userInput            time               handle                                                     = do
-    input <- readIORef userInput
+idle    gameInput            time               handle                                                     = do
+    input <- readIORef gameInput
     now <- getCurrentTime
     before <- readIORef time
     let deltaTime = realToFrac $ diffUTCTime now before
