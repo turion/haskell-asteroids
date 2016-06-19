@@ -57,10 +57,10 @@ render    (location, orientation)    = do
         translate $ (Vector3 (realToFrac (x location):: GLfloat) (realToFrac (y location):: GLfloat) 0)
         rotate (realToFrac orientation * 360 / (2 * pi) :: GLfloat) $ Vector3 0 0 1
         renderPrimitive Polygon $ do
-            vertex $ (Vertex3   0.00    0.10  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.05  (-0.05) 0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3   0.00    0.05  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3   0.02  (-0.02) 0 :: Vertex3 GLfloat)
             vertex $ (Vertex3   0.00    0.00  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.05) (-0.05) 0 :: Vertex3 GLfloat)
+            vertex $ (Vertex3 (-0.02) (-0.02) 0 :: Vertex3 GLfloat)
     swapBuffers
 
 
