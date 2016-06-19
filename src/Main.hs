@@ -16,22 +16,22 @@ import UI
 
 -- Logic
 
-movingShip :: Location -> Velocity -> Orientation -> SF UserInput (Location, Velocity, Orientation)
-movingShip    location    velocity    orientation    = proc (UserInput acceleration deltaOrientation) -> do
+movingShip :: Location -> Velocity -> Orientation -> SF GameInput (Location, Velocity, Orientation)
+movingShip    location    velocity    orientation    = proc (GameInput acceleration deltaOrientation) -> do
     dO <- (orientation+) ^<< integral -< deltaOrientation
-    vX <- ((x velocity)+)^<< integral -< (-sin dO) * acceleration -- change to take orientation into consideration
-    vY <- ((y velocity)+)^<< integral -< cos dO * acceleration -- change to take orientation into consideration
+    vX <- ((x velocity)+)^<< integral -< (-sin dO) * acceleration
+    vY <- ((y velocity)+)^<< integral -< cos dO * acceleration
     x  <- ((x location)+)^<< integral -< vX
     y  <- ((y location)+)^<< integral -< vY
     returnA -< (Vector x y, Vector vX vY, dO)
 
-createShip :: Location -> SF UserInput (Location, Velocity, Orientation)
+createShip :: Location -> SF GameInput (Location, Velocity, Orientation)
 createShip    location    = movingShip location (Vector 0.0 0.0) 0.0
 
 
 -- Graphics
 
-idle :: IORef (UserInput) -> IORef (UTCTime) -> ReactHandle UserInput (Location, Velocity, Orientation) -> IO()
+idle :: IORef (GameInput) -> IORef (UTCTime) -> ReactHandle GameInput (Location, Velocity, Orientation) -> IO()
 idle    userInput            time               handle                                                     = do
     input <- readIORef userInput
     now <- getCurrentTime
@@ -46,7 +46,7 @@ initGL ::  IO ()
 initGL     = do
     getArgsAndInitialize
     initialDisplayMode $= [DoubleBuffered]
-    createWindow       "Bouncing Ball!"
+    createWindow       "Haskelloids!"
     return ()
     
  
@@ -68,20 +68,20 @@ render    (location, orientation)    = do
 
 main :: IO ()
 main    = do
-    input <- newIORef (UserInput 0.0 0.0)
+    input <- newIORef (GameInput 0.0 0.0)
     output <- newIORef (Vector 0.0 0.0, 0.0)
     t <- getCurrentTime
     time <- newIORef t
     initGL
-    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ createShip (Vector 0.0 0.0)
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> writeIORef input (parseInput $ Event $ Keyboard key keyState modifiers))
+    handle <- reactInit (return (GameInput 0.0 0.0)) (actuator output) $ createShip (Vector 0.0 0.0)
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput input $ Event $ Keyboard key keyState modifiers)
     idleCallback $= Just (idle input time handle)
     displayCallback $= (readIORef output >>= render)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
 
-actuator :: IORef (Location, Orientation) -> ReactHandle (UserInput) (Location, Velocity, Orientation) -> Bool -> (Location, Velocity, Orientation) -> IO Bool
+actuator :: IORef (Location, Orientation) -> ReactHandle (GameInput) (Location, Velocity, Orientation) -> Bool -> (Location, Velocity, Orientation) -> IO Bool
 actuator    output                           _                                                            _       (location, velocity, orientation)    = do
     writeIORef output (location, orientation)
     return False
