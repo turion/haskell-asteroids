@@ -12,6 +12,7 @@ import Control.Concurrent
 -- Haskelloids
 import Datatypes
 import UI
+import Graphics
 
 
 -- Logic
@@ -28,44 +29,6 @@ movingShip    (GameObject location velocity orientation gameObjectType) = proc (
 createShip :: Location -> SF GameInput GameObject
 createShip    location    = movingShip $ GameObject location (Vector 0.0 0.0) 0.0 Ship
 
-
--- Graphics
-
-idle :: IORef GameInput -> IORef UTCTime -> ReactHandle GameInput GameObject -> IO()
-idle    gameInput          time             handle                              = do
-    input <- readIORef gameInput
-    now <- getCurrentTime
-    before <- readIORef time
-    let deltaTime = realToFrac $ diffUTCTime now before
-    _ <- react handle (deltaTime, Just input)
-    writeIORef time now
-    postRedisplay Nothing    
-    return ()
-
-initGL ::  IO ()
-initGL     = do
-    getArgsAndInitialize
-    initialDisplayMode $= [DoubleBuffered]
-    createWindow       "Haskelloids!"
-    return ()
-    
- 
-render :: GameObject -> IO()
-render    gameObject    = do
-    clear[ColorBuffer]
-    preservingMatrix $ do
-        let location = getLocation gameObject
-        translate $ (Vector3 (realToFrac (getX location):: GLfloat) (realToFrac (getY location):: GLfloat) 0)
-        let orientation = getOrientation gameObject
-        rotate (realToFrac orientation * 360 / (2 * pi) :: GLfloat) $ Vector3 0 0 1
-        renderPrimitive Polygon $ do
-            vertex $ (Vertex3   0.00    0.05  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.02  (-0.02) 0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.00    0.00  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.02) (-0.02) 0 :: Vertex3 GLfloat)
-    swapBuffers
-
-
 -- Main
 
 main :: IO ()
@@ -78,10 +41,22 @@ main    = do
     handle <- reactInit (return (GameInput 0.0 0.0)) (actuator output) $ createShip (Vector 0.0 0.0)
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput input $ Event $ Keyboard key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    displayCallback $= (readIORef output >>= render)
+    displayCallback $= (readIORef output >>= renderGameObject)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
+
+
+idle :: IORef GameInput -> IORef UTCTime -> ReactHandle GameInput GameObject -> IO()
+idle    gameInput          time             handle                              = do
+    input <- readIORef gameInput
+    now <- getCurrentTime
+    before <- readIORef time
+    let deltaTime = realToFrac $ diffUTCTime now before
+    _ <- react handle (deltaTime, Just input)
+    writeIORef time now
+    postRedisplay Nothing    
+
 
 actuator :: IORef GameObject -> ReactHandle GameInput GameObject -> Bool -> GameObject -> IO Bool
 actuator    output              _                                   _       gameObject    = do
