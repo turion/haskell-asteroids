@@ -16,23 +16,23 @@ import UI
 
 -- Logic
 
-movingShip :: Location -> Velocity -> Orientation -> SF GameInput (Location, Velocity, Orientation)
-movingShip    location    velocity    orientation    = proc (GameInput acceleration deltaOrientation) -> do
-    dO <- (orientation+) ^<< integral -< deltaOrientation
-    vX <- ((x velocity)+)^<< integral -< (-sin dO) * acceleration
-    vY <- ((y velocity)+)^<< integral -< cos dO * acceleration
-    x  <- ((x location)+)^<< integral -< vX
-    y  <- ((y location)+)^<< integral -< vY
-    returnA -< (Vector x y, Vector vX vY, dO)
+movingShip :: GameObject ->                                             SF GameInput GameObject
+movingShip    (GameObject location velocity orientation gameObjectType) = proc (GameInput acceleration deltaOrientation) -> do
+    dO <- (orientation+)  ^<< integral -< deltaOrientation
+    vX <- ((getX velocity)+) ^<< integral -< (-sin dO) * acceleration
+    vY <- ((getY velocity)+) ^<< integral -< cos dO * acceleration
+    x  <- ((getX location)+) ^<< integral -< vX
+    y  <- ((getY location)+) ^<< integral -< vY
+    returnA -< GameObject (Vector x y) (Vector vX vY) dO gameObjectType
 
-createShip :: Location -> SF GameInput (Location, Velocity, Orientation)
-createShip    location    = movingShip location (Vector 0.0 0.0) 0.0
+createShip :: Location -> SF GameInput GameObject
+createShip    location    = movingShip $ GameObject location (Vector 0.0 0.0) 0.0 Ship
 
 
 -- Graphics
 
-idle :: IORef (GameInput) -> IORef (UTCTime) -> ReactHandle GameInput (Location, Velocity, Orientation) -> IO()
-idle    gameInput            time               handle                                                     = do
+idle :: IORef GameInput -> IORef UTCTime -> ReactHandle GameInput GameObject -> IO()
+idle    gameInput          time             handle                              = do
     input <- readIORef gameInput
     now <- getCurrentTime
     before <- readIORef time
@@ -50,11 +50,13 @@ initGL     = do
     return ()
     
  
-render :: (Location, Orientation) -> IO()
-render    (location, orientation)    = do
+render :: GameObject -> IO()
+render    gameObject    = do
     clear[ColorBuffer]
     preservingMatrix $ do
-        translate $ (Vector3 (realToFrac (x location):: GLfloat) (realToFrac (y location):: GLfloat) 0)
+        let location = getLocation gameObject
+        translate $ (Vector3 (realToFrac (getX location):: GLfloat) (realToFrac (getY location):: GLfloat) 0)
+        let orientation = getOrientation gameObject
         rotate (realToFrac orientation * 360 / (2 * pi) :: GLfloat) $ Vector3 0 0 1
         renderPrimitive Polygon $ do
             vertex $ (Vertex3   0.00    0.05  0 :: Vertex3 GLfloat)
@@ -69,7 +71,7 @@ render    (location, orientation)    = do
 main :: IO ()
 main    = do
     input <- newIORef (GameInput 0.0 0.0)
-    output <- newIORef (Vector 0.0 0.0, 0.0)
+    output <- newIORef (GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship)
     t <- getCurrentTime
     time <- newIORef t
     initGL
@@ -81,7 +83,7 @@ main    = do
     writeIORef time t'
     mainLoop
 
-actuator :: IORef (Location, Orientation) -> ReactHandle (GameInput) (Location, Velocity, Orientation) -> Bool -> (Location, Velocity, Orientation) -> IO Bool
-actuator    output                           _                                                            _       (location, velocity, orientation)    = do
-    writeIORef output (location, orientation)
+actuator :: IORef GameObject -> ReactHandle GameInput GameObject -> Bool -> GameObject -> IO Bool
+actuator    output              _                                   _       gameObject    = do
+    writeIORef output gameObject
     return False
