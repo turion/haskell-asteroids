@@ -1,6 +1,6 @@
 module Datatypes (
   Vector(..),
-  GameObjectType,
+  GameObjectType(..),
   GameObject(..),
   Location,
   Velocity,
@@ -9,8 +9,8 @@ module Datatypes (
   ) where
 
 data Vector = Vector {
-  x :: Double,
-  y :: Double
+  getX :: Double,
+  getY :: Double
   } deriving (Eq, Show)
 
 type Location = Vector
@@ -22,10 +22,10 @@ data GameObjectType = Ship | Asteroid
   deriving Show
 
 data GameObject = GameObject {
-  location :: Location,
-  orientation :: Orientation,
-  velocity :: Velocity,
-  gameObjectType :: GameObjectType
+  getLocation :: Location,
+  getVelocity :: Velocity,
+  getOrientation :: Orientation,
+  getGameObjectType :: GameObjectType
   }
 
 
