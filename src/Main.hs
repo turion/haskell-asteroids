@@ -16,24 +16,24 @@ import UI
 
 -- Logic
 
-movingShip :: Location -> Velocity -> Orientation -> SF(Acceleration, Orientation) (Location, Velocity, Orientation)
-movingShip    location    velocity    orientation    = proc (acceleration, deltaOrientation) -> do
+movingShip :: Location -> Velocity -> Orientation -> SF GameInput (Location, Velocity, Orientation)
+movingShip    location    velocity    orientation    = proc (GameInput acceleration deltaOrientation) -> do
     dO <- (orientation+) ^<< integral -< deltaOrientation
-    vX <- ((x velocity)+)^<< integral -< (-sin dO) * acceleration -- change to take orientation into consideration
-    vY <- ((y velocity)+)^<< integral -< cos dO * acceleration -- change to take orientation into consideration
+    vX <- ((x velocity)+)^<< integral -< (-sin dO) * acceleration
+    vY <- ((y velocity)+)^<< integral -< cos dO * acceleration
     x  <- ((x location)+)^<< integral -< vX
     y  <- ((y location)+)^<< integral -< vY
     returnA -< (Vector x y, Vector vX vY, dO)
 
-createShip :: Location -> SF (Acceleration, Orientation) (Location, Velocity, Orientation)
+createShip :: Location -> SF GameInput (Location, Velocity, Orientation)
 createShip    location    = movingShip location (Vector 0.0 0.0) 0.0
 
 
 -- Graphics
 
-idle :: IORef (Acceleration, Orientation) -> IORef (UTCTime) -> ReactHandle (Acceleration, Orientation) (Location, Velocity, Orientation) -> IO()
-idle    userInput                            time               handle                                                                       = do
-    input <- readIORef userInput
+idle :: IORef (GameInput) -> IORef (UTCTime) -> ReactHandle GameInput (Location, Velocity, Orientation) -> IO()
+idle    gameInput            time               handle                                                     = do
+    input <- readIORef gameInput
     now <- getCurrentTime
     before <- readIORef time
     let deltaTime = realToFrac $ diffUTCTime now before
@@ -46,7 +46,7 @@ initGL ::  IO ()
 initGL     = do
     getArgsAndInitialize
     initialDisplayMode $= [DoubleBuffered]
-    createWindow       "Bouncing Ball!"
+    createWindow       "Haskelloids!"
     return ()
     
  
@@ -68,21 +68,20 @@ render    (location, orientation)    = do
 
 main :: IO ()
 main    = do
-    input <- newIORef (0.0, 0.0)
+    input <- newIORef (GameInput 0.0 0.0)
     output <- newIORef (Vector 0.0 0.0, 0.0)
     t <- getCurrentTime
     time <- newIORef t
     initGL
-    handle <- reactInit (return (0.0, 0.0)) (actuator output) $ createShip (Vector 0.0 0.0)
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> writeIORef input (parseInput $ Event $ Keyboard key keyState modifiers))
+    handle <- reactInit (return (GameInput 0.0 0.0)) (actuator output) $ createShip (Vector 0.0 0.0)
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput input $ Event $ Keyboard key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    --(outputLoc, outputOr) <- (readIORef output, readIORef outputOrientation)
     displayCallback $= (readIORef output >>= render)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
 
-actuator :: IORef (Location, Double) -> ReactHandle (Acceleration, Orientation) (Location, Velocity, Orientation) -> Bool -> (Location, Velocity, Orientation) -> IO Bool
-actuator    output          _                                                                 _       (location, velocity, orientation)    = do
+actuator :: IORef (Location, Orientation) -> ReactHandle (GameInput) (Location, Velocity, Orientation) -> Bool -> (Location, Velocity, Orientation) -> IO Bool
+actuator    output                           _                                                            _       (location, velocity, orientation)    = do
     writeIORef output (location, orientation)
     return False
