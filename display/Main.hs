@@ -14,13 +14,6 @@ main = do
     else return ()-}
   fullScreen
   mainLoop
-
-getScreenSize :: GettableStateVar Size
-getScreenSize = screenSize
-
-keyboard :: GettableStateVar Bool
-keyboard = do
-  hasKeyboard
   --glutInit
   --screenSize
 {- To close the fullscreen window - alt tab and right click on the item in the windows task bar and click close -}

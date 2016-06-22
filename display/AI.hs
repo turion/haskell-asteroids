@@ -17,6 +17,10 @@ rotateClockwiseToAim x1 y1 x2 y2 angle | x1 == x2 && y1 == y2 = True
 
 doObjectsMeet :: GameObject -> GameObject -> Bool
 doObjectsMeet (GameObject {location = Vector x1 y1, velocity = Vector vx1 vy1, orientation = o1, scaleObject = s1, gameObjectType = objType1}) (GameObject {location = Vector x2 y2, velocity = Vector vx2 vy2, orientation = o2, scaleObject = s2, gameObjectType = objType2})
+    | y2 > y1 && vy2 > 0 && vy1 < 0 = False
+    | y1 > y2 && vy1 > 0 && vy2 < 0 = False
+    | x2 > x1 && vx2 > 0 && vx1 < 0 = False
+    | x1 > x2 && vx1 > 0 && vx2 < 0 = False
     | dx * dvy == dy * dvx = True
     | otherwise = False
     where
