@@ -1,6 +1,7 @@
 module AI (rotateClockwiseToAim) where
 
 import CalculateAngle
+import Datatypes
 
 -- this function gives true if the enemy should turn in clockwise direction, false otherwise
 -- takes coordinates of the ship, coordinates of an enemy and the angle to what the enemy is facing
@@ -12,3 +13,14 @@ rotateClockwiseToAim x1 y1 x2 y2 angle | x1 == x2 && y1 == y2 = True
                       | otherwise = True
     where
       phi = calculateAngle x1 y1 x2 y2
+--doObjectsMeet (GameObject (Vector 0.5 0.5) (Vector 0.2 0.1) 135.0 1.0 EnemyShip) (GameObject (Vector (-0.8) 0.4) (Vector 0.1 0.1) 160.0 0.5 Asteroid)
+
+doObjectsMeet :: GameObject -> GameObject -> Bool
+doObjectsMeet (GameObject {location = Vector x1 y1, velocity = Vector vx1 vy1, orientation = o1, scaleObject = s1, gameObjectType = objType1}) (GameObject {location = Vector x2 y2, velocity = Vector vx2 vy2, orientation = o2, scaleObject = s2, gameObjectType = objType2})
+    | dx * dvy == dy * dvx = True
+    | otherwise = False
+    where
+      dx = x2 - x1
+      dy = y2 - y1
+      dvx = vx2 - vx1
+      dvy = vy2 - vy1
