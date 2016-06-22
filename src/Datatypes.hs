@@ -1,31 +1,61 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Datatypes (
   Vector(..),
   GameObjectType(..),
+  GameLevel(..),
   GameObject(..),
   Location,
   Velocity,
   Acceleration,
-  Orientation
+  Orientation,
+  Scale
   ) where
 
+import Graphics.UI.GLUT
+import FRP.Yampa.VectorSpace
+
 data Vector = Vector {
-  getX :: Double,
-  getY :: Double
+  x :: GLfloat,
+  y :: GLfloat
   } deriving (Eq, Show)
+
+instance VectorSpace Vector GLfloat where
+  zeroVector = Vector 0 0
+  a *^ Vector x y = Vector (a*x) (a*y)
+  Vector x1 y1 ^+^ Vector x2 y2  = Vector (x1+x2) (y1+y2)
+  Vector x1 y1 `dot` Vector x2 y2 = x1*x2 + y1*y2
 
 type Location = Vector
 type Velocity = Vector
-type Acceleration = Double
-type Orientation = Double
+type Acceleration = GLfloat
+type Orientation = GLfloat
+instance VectorSpace Orientation GLfloat where
+  zeroVector = 0
+  (*^) = (*)
+  (^+^) = (+)
+  dot = (*)
 
-data GameObjectType = Ship | Asteroid 
-  deriving Show
+type Scale = GLfloat
+
+data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
+   deriving (Eq, Show)
 
 data GameObject = GameObject {
-  getLocation :: Location,
-  getVelocity :: Velocity,
-  getOrientation :: Orientation,
-  getGameObjectType :: GameObjectType
+  location :: Location,
+  velocity :: Velocity,
+  orientation :: Orientation,
+  gameObjectType :: GameObjectType
   }
 
+radius :: GameObjectType -> GLfloat
+radius = radius
+
+data GameLevel = GameLevel {
+  player :: GameObject,
+  enemies :: [GameObject],
+  asteroids :: [GameObject],
+  projectiles :: [GameObject],
+  enemyProjectiles :: [GameObject]
+}
 
