@@ -8,12 +8,11 @@ import Graphics.UI.GLUT
 
 import Datatypes
 
-initGL ::  IO ()
+initGL ::  IO Window
 initGL     = do
     getArgsAndInitialize
     initialDisplayMode $= [DoubleBuffered]
     createWindow "Haskelloids!"
-    return ()
 
 reshape :: ReshapeCallback
 reshape size = do

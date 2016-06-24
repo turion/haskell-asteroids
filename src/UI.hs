@@ -24,8 +24,9 @@ data GameInput = GameInput {
 }
 
 
-handleInput :: IORef GameInput -> Event UserInput -> IO ()
-handleInput    gameInput       userInput       = do
+handleInput :: Window -> IORef GameInput -> Event UserInput -> IO ()
+handleInput    window    _               (Event (Keyboard (Char 'q') (Down) _)) = destroyWindow window
+handleInput    _         gameInput       userInput       = do
     oldInput <- readIORef gameInput
     writeIORef gameInput $ GameInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
     return ()    

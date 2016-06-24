@@ -51,9 +51,9 @@ main    = do
     output <- newIORef (EmptyLevel)
     t <- getCurrentTime
     time <- newIORef t
-    initGL
+    window <- initGL
     handle <- reactInit (return (GameInput 0.0 0.0)) (actuator output) $ game initialGameLevel
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput input $ Event $ Keyboard key keyState modifiers)
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window input $ Event $ Keyboard key keyState modifiers)
     idleCallback $= Just (idle input time handle)
     displayCallback $= (readIORef output >>= renderLevel)
     t' <- getCurrentTime

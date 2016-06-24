@@ -51,7 +51,7 @@ data GameObject = GameObject {
 radius :: GameObjectType -> GLfloat
 radius = radius
 
-data GameLevel = GameLevel {
+data GameLevel = EmptyLevel | GameLevel {
   player :: GameObject,
   enemies :: [GameObject],
   asteroids :: [GameObject],
