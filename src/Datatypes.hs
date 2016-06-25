@@ -9,16 +9,18 @@ module Datatypes (
   Velocity,
   Acceleration,
   Orientation,
-  Scale
+  Scale,
+  getRandom
   ) where
 
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
+import System.Random
 
 data Vector = Vector {
   x :: GLfloat,
   y :: GLfloat
-  } deriving (Eq, Show)
+} deriving (Eq, Show)
 
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
@@ -30,13 +32,13 @@ type Location = Vector
 type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
+type Scale = GLfloat
+
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
   (*^) = (*)
   (^+^) = (+)
   dot = (*)
-
-type Scale = GLfloat
 
 data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
    deriving (Eq, Show)
@@ -46,7 +48,7 @@ data GameObject = GameObject {
   velocity :: Velocity,
   orientation :: Orientation,
   gameObjectType :: GameObjectType
-  }
+}
 
 radius :: GameObjectType -> GLfloat
 radius = radius
@@ -59,3 +61,9 @@ data GameLevel = GameLevel {
   enemyProjectiles :: [GameObject]
 }
 
+getRandom :: IO GLfloat
+getRandom = do
+  newStdGen
+  g <- getStdGen
+  let cc = take 1 (randoms g :: [GLfloat])
+  return $ head cc

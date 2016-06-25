@@ -1,11 +1,12 @@
 module Graphics (
     initGL,
     reshape,
-    renderLevel
+    renderLevel,
+    generateLevel
   ) where
 
 import Graphics.UI.GLUT
-
+import Control.Monad
 import Datatypes
 
 initGL ::  IO ()
@@ -31,7 +32,7 @@ drawGameObjectType Ship = do
               c1 = 1.0
               c2 = 1.0
               c3 = 1.0 in
-              drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
+              drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
 drawGameObjectType EnemyShip = do
           let x1 = 0
               y1 = 0.05
@@ -44,7 +45,7 @@ drawGameObjectType EnemyShip = do
               c1 = 1.0
               c2 = 0.0
               c3 = 0.0 in
-              drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
+              drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
 drawGameObjectType (Asteroid s)= do
   renderPrimitive Polygon $ do
             color $ Color3 (0.4 :: GLfloat) 0.4 0.4
@@ -107,11 +108,29 @@ renderLevel :: GameLevel -> IO ()
 renderLevel (GameLevel {player = p, enemies = e, asteroids = a, projectiles = ps, enemyProjectiles = eps}) = preservingMatrix $ do
      clear[ColorBuffer]
      drawGameObject p
-     drawListOfGameObjects e
-     drawListOfGameObjects a
-     drawListOfGameObjects ps
-     drawListOfGameObjects eps
+     mapM_ drawGameObject e
+     mapM_ drawGameObject a
+     mapM_ drawGameObject ps
+     mapM_ drawGameObject eps
      swapBuffers
 
-drawListOfGameObjects :: [GameObject] -> IO ()
-drawListOfGameObjects = mapM_ drawGameObject
+generateLevel :: Int -> Int -> IO GameLevel
+generateLevel enemyAmount asteroidAmount = do
+  --e <- generateGameObject EnemyShip
+  enemies <- generateSeveralObjects EnemyShip enemyAmount
+  asteroids <- generateSeveralObjects (Asteroid 2.3) asteroidAmount
+  return (GameLevel player enemies asteroids [] [])
+  where
+      player = GameObject (Vector 0.1 0.1) (Vector 0 0) 0 Ship
+
+generateSeveralObjects :: GameObjectType -> Int -> IO [GameObject]
+generateSeveralObjects objType n = do
+  result <- replicateM n (generateGameObject objType)
+  return result
+
+generateGameObject :: GameObjectType -> IO GameObject
+generateGameObject objType = do
+  x <- getRandom
+  y <- getRandom
+  o <- getRandom
+  return $ GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) objType
