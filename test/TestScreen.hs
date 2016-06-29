@@ -1,6 +1,7 @@
 import Graphics.UI.GLUT
 import Graphics
 import Datatypes
+import Generator
 
 main :: IO ()
 main = do
@@ -14,6 +15,6 @@ main = do
 display :: DisplayCallback
 display = do
   clear [ColorBuffer]
-  level <- generateLevel 8 20
+  level <- generateLevel 5 20
   renderLevel level
   flush

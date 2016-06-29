@@ -1,13 +1,13 @@
 module Graphics (
     initGL,
-    reshape,
     renderLevel,
-    generateLevel
+    reshape
   ) where
 
 import Graphics.UI.GLUT
 import Control.Monad
 import Datatypes
+import Generator
 
 initGL ::  IO ()
 initGL     = do
@@ -32,7 +32,7 @@ drawGameObjectType Ship = do
               c1 = 1.0
               c2 = 1.0
               c3 = 1.0 in
-              drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
+              drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
 drawGameObjectType EnemyShip = do
           let x1 = 0
               y1 = 0.05
@@ -45,22 +45,29 @@ drawGameObjectType EnemyShip = do
               c1 = 1.0
               c2 = 0.0
               c3 = 0.0 in
-              drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
+              drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
 drawGameObjectType (Asteroid s)= do
+  scale s s s
   renderPrimitive Polygon $ do
+            y1 <- getRandom
+            x2 <- getRandom
+            x3 <- getRandom
+            x4 <- getRandom
+            y5 <- getRandom
+            x6 <- getRandom
+            x7 <- getRandom
+            x8 <- getRandom
             color $ Color3 (0.4 :: GLfloat) 0.4 0.4
-            vertex $ (Vertex3   0.00    0.05  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.04    0.03  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.03    0.04  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.05    0.00  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.03  (-0.04) 0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.04  (-0.03) 0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3   0.00  (-0.05) 0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.04) (-0.03) 0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.03) (-0.04) 0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.05)   0.00  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.03)   0.04  0 :: Vertex3 GLfloat)
-            vertex $ (Vertex3 (-0.04)   0.03  0 :: Vertex3 GLfloat)
+            vertex $ (Vertex2   0               (y1 * a + a)    :: Vertex2 GLfloat)
+            vertex $ (Vertex2   (x2 * b + b)    (x2 * b + b)    :: Vertex2 GLfloat)
+            vertex $ (Vertex2   (x3 * a + a)    0               :: Vertex2 GLfloat)
+            vertex $ (Vertex2   (x4 * b + b)    (-(x4 * b + b)) :: Vertex2 GLfloat)
+            vertex $ (Vertex2   0               (-(y5 * a + a)) :: Vertex2 GLfloat)
+            vertex $ (Vertex2   (-(x6 * b + b)) (-(x6 * b + b)) :: Vertex2 GLfloat)
+            vertex $ (Vertex2   (-(x7 * a + a)) 0               :: Vertex2 GLfloat)
+            vertex $ (Vertex2   (-(x8 * b + b)) (x8 * b + b)    :: Vertex2 GLfloat)
+            where a = 0.025
+                  b = 0.0175
 drawGameObjectType Projectile = do
           let x1 = 0.005
               y1 = 0.02
@@ -113,24 +120,3 @@ renderLevel (GameLevel {player = p, enemies = e, asteroids = a, projectiles = ps
      mapM_ drawGameObject ps
      mapM_ drawGameObject eps
      swapBuffers
-
-generateLevel :: Int -> Int -> IO GameLevel
-generateLevel enemyAmount asteroidAmount = do
-  --e <- generateGameObject EnemyShip
-  enemies <- generateSeveralObjects EnemyShip enemyAmount
-  asteroids <- generateSeveralObjects (Asteroid 2.3) asteroidAmount
-  return (GameLevel player enemies asteroids [] [])
-  where
-      player = GameObject (Vector 0.1 0.1) (Vector 0 0) 0 Ship
-
-generateSeveralObjects :: GameObjectType -> Int -> IO [GameObject]
-generateSeveralObjects objType n = do
-  result <- replicateM n (generateGameObject objType)
-  return result
-
-generateGameObject :: GameObjectType -> IO GameObject
-generateGameObject objType = do
-  x <- getRandom
-  y <- getRandom
-  o <- getRandom
-  return $ GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) objType

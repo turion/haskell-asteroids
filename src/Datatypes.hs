@@ -9,8 +9,7 @@ module Datatypes (
   Velocity,
   Acceleration,
   Orientation,
-  Scale,
-  getRandom
+  Scale
   ) where
 
 import Graphics.UI.GLUT
@@ -60,10 +59,3 @@ data GameLevel = GameLevel {
   projectiles :: [GameObject],
   enemyProjectiles :: [GameObject]
 }
-
-getRandom :: IO GLfloat
-getRandom = do
-  newStdGen
-  g <- getStdGen
-  let cc = take 1 (randoms g :: [GLfloat])
-  return $ head cc
