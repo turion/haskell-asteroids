@@ -1,6 +1,6 @@
 {-# LANGUAGE Arrows #-}
 module UI (
-    UserInput(..),
+    KeyboardInput(..),
     GameInput(..),
     handleInput
 ) where
@@ -12,7 +12,7 @@ import Data.IORef
 
 import Datatypes
 
-data UserInput = Keyboard { 
+data KeyboardInput = KeyboardInput { 
     key       :: Key,
     keyState  :: KeyState,
     modifiers :: Modifiers
@@ -24,23 +24,23 @@ data GameInput = GameInput {
 }
 
 
-handleInput :: Window -> IORef GameInput -> Event UserInput -> IO ()
-handleInput    window    _               (Event (Keyboard (Char 'q') (Down) _)) = destroyWindow window
+handleInput :: Window -> IORef GameInput -> Event KeyboardInput -> IO ()
+handleInput    window    _               (Event (KeyboardInput (Char 'q') (Down) _)) = destroyWindow window
 handleInput    _         gameInput       userInput       = do
     oldInput <- readIORef gameInput
     writeIORef gameInput $ GameInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
     return ()    
 
-parseAcceleration :: GameInput -> Event UserInput ->                                    Acceleration
-parseAcceleration    _            (Event (Keyboard (SpecialKey KeyUp)    (Down) _)) =  1.0
-parseAcceleration    _            (Event (Keyboard (SpecialKey KeyDown)  (Down) _)) =  (-1.0)
-parseAcceleration    _            (Event (Keyboard (SpecialKey KeyUp)    (Up)   _)) =  0.0
-parseAcceleration    _            (Event (Keyboard (SpecialKey KeyDown)  (Up)   _)) =  0.0
+parseAcceleration :: GameInput -> Event KeyboardInput ->                                    Acceleration
+parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyUp)    (Down) _)) =  1.0
+parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyDown)  (Down) _)) =  (-1.0)
+parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyUp)    (Up)   _)) =  0.0
+parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyDown)  (Up)   _)) =  0.0
 parseAcceleration    oldInput     _                                                 =  acceleration oldInput
 
-parseOrientation :: GameInput -> Event UserInput ->                                    Orientation
-parseOrientation    _            (Event (Keyboard (SpecialKey KeyRight) (Down) _)) =  (-1.0)
-parseOrientation    _            (Event (Keyboard (SpecialKey KeyLeft)  (Down) _)) =  1.0
-parseOrientation    _            (Event (Keyboard (SpecialKey KeyRight) (Up)   _)) =  0.0
-parseOrientation    _            (Event (Keyboard (SpecialKey KeyLeft)  (Up)   _)) =  0.0
+parseOrientation :: GameInput -> Event KeyboardInput ->                                    Orientation
+parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyRight) (Down) _)) =  (-1.0)
+parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyLeft)  (Down) _)) =  1.0
+parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyRight) (Up)   _)) =  0.0
+parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyLeft)  (Up)   _)) =  0.0
 parseOrientation    oldInput     _                                                 =  turn oldInput

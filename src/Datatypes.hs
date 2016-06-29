@@ -5,6 +5,7 @@ module Datatypes (
   GameObjectType(..),
   GameLevel(..),
   GameObject(..),
+  CollisionCorrection(..),
   Location,
   Velocity,
   Acceleration,
@@ -63,3 +64,7 @@ data GameLevel = EmptyLevel | GameLevel {
   enemyProjectiles :: [GameObject]
 }
 
+data CollisionCorrection = CollisionCorrection {
+  deltaVelocity :: Velocity,
+  deltaLocation :: Location
+}

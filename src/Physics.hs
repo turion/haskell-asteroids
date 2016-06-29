@@ -1,10 +1,12 @@
 module Physics (
     radius,
+    collide
   ) where
 
 import Datatypes
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
+import FRP.Yampa.Event
 
 radius :: GameObjectType -> GLfloat
 radius (Asteroid scale)     = scale * 0.05
@@ -23,9 +25,13 @@ overlap    object        other
         r1 = radius $ gameObjectType object
         r2 = radius $ gameObjectType other
 
-getOverlappingObjects :: GameObject -> [GameObjects] -> Maybe [GameObject]
-getOverlappingObjects object [] = Nothing
-getOverlappingObjects object (other:others) 
-    | overlap object other = Just $ other : (getOverlappingObjects object others)
-    | otherwise            = getOverlappingObjects object others
+--getOverlappingObjects :: GameObject -> [GameObject] -> Maybe [GameObject]
+--getOverlappingObjects object [] = Nothing
+--getOverlappingObjects object (other:others) 
+--    | overlap object other = Just $ other : (getOverlappingObjects object others)
+--    | otherwise            = getOverlappingObjects object others
 
+collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
+collide object other 
+    | overlap object other = (NoEvent, NoEvent)
+    | otherwise            = (NoEvent, NoEvent)
