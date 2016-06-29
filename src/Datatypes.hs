@@ -15,6 +15,9 @@ module Datatypes (
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 
+
+-- Basic types: Vector, GLfloat + types --
+
 data Vector = Vector {
   x :: GLfloat,
   y :: GLfloat
@@ -30,6 +33,7 @@ type Location = Vector
 type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
+
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
   (*^) = (*)
@@ -37,6 +41,9 @@ instance VectorSpace Orientation GLfloat where
   dot = (*)
 
 type Scale = GLfloat
+
+
+-- Game types: GameObjectType, GameObject, GameLevel --
 
 data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
    deriving (Eq, Show)
