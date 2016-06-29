@@ -21,7 +21,7 @@ import FRP.Yampa.VectorSpace
 data Vector = Vector {
   x :: GLfloat,
   y :: GLfloat
-  } deriving (Eq, Show)
+} deriving (Eq, Show)
 
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
@@ -53,10 +53,7 @@ data GameObject = GameObject {
   velocity :: Velocity,
   orientation :: Orientation,
   gameObjectType :: GameObjectType
-  }
-
-radius :: GameObjectType -> GLfloat
-radius = radius
+}  deriving (Eq, Show)
 
 data GameLevel = EmptyLevel | GameLevel {
   player :: GameObject,
