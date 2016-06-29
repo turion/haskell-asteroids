@@ -33,5 +33,5 @@ overlap    object        other
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
-    | overlap object other = (NoEvent, NoEvent)
+    | overlap object other = (Event (CollisionCorrection ((-2) *^ velocity object) (Vector 0.0 0.0)) , NoEvent)
     | otherwise            = (NoEvent, NoEvent)
