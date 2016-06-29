@@ -22,3 +22,10 @@ overlap    object        other
         loc2 = location other
         r1 = radius $ gameObjectType object
         r2 = radius $ gameObjectType other
+
+getOverlappingObjects :: GameObject -> [GameObjects] -> Maybe [GameObject]
+getOverlappingObjects object [] = Nothing
+getOverlappingObjects object (other:others) 
+    | overlap object other = Just $ other : (getOverlappingObjects object others)
+    | otherwise            = getOverlappingObjects object others
+
