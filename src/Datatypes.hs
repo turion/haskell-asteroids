@@ -53,10 +53,6 @@ radius :: GameObjectType -> GLfloat
 radius = radius
 
 data GameLevel = GameLevel {
-  player :: GameObject,
-  enemies :: [GameObject],
-  asteroids :: [GameObject],
-  projectiles :: [GameObject],
-  enemyProjectiles :: [GameObject]
+  objects :: [GameObject]
 } deriving (Eq, Show)
 

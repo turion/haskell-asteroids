@@ -33,7 +33,7 @@ drawGameObjectType Ship = do
               c1 = 1.0
               c2 = 1.0
               c3 = 1.0 in
-              drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
+              drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
 drawGameObjectType EnemyShip = do
           let x1 = 0
               y1 = 0.05
@@ -46,7 +46,7 @@ drawGameObjectType EnemyShip = do
               c1 = 1.0
               c2 = 0.0
               c3 = 0.0 in
-              drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
+              drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
 drawGameObjectType (Asteroid s)= do
   scale s s s
   renderPrimitive Polygon $ do
@@ -113,11 +113,7 @@ drawGameObject      GameObject { location = location, orientation = orientation,
         drawGameObjectType $ gameObjectType
 
 renderLevel :: GameLevel -> IO ()
-renderLevel (GameLevel {player = p, enemies = e, asteroids = a, projectiles = ps, enemyProjectiles = eps}) = preservingMatrix $ do
+renderLevel (GameLevel objects) = preservingMatrix $ do
      clear[ColorBuffer]
-     drawGameObject p
-     mapM_ drawGameObject e
-     mapM_ drawGameObject a
-     mapM_ drawGameObject ps
-     mapM_ drawGameObject eps
+     mapM_ drawGameObject objects
      swapBuffers

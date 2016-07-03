@@ -22,7 +22,7 @@ movingShip    (GameObject location velocity orientation gameObjectType) = proc (
     dO <- (orientation+)  ^<< integral -< deltaOrientation
     vel <- (velocity ^+^) ^<< integral -< acceleration *^ Vector (-sin dO) (cos dO)
     loc <- (location ^+^) ^<< integral -< vel
-    returnA -< GameLevel (GameObject loc vel dO gameObjectType) [] [] [] []
+    returnA -< GameLevel [GameObject loc vel dO gameObjectType]
 
 createShip :: Location -> SF GameInput GameLevel
 createShip    location    = movingShip $ GameObject location (Vector 0.0 0.0) 0.0 Ship
@@ -32,7 +32,7 @@ createShip    location    = movingShip $ GameObject location (Vector 0.0 0.0) 0.
 main :: IO ()
 main    = do
     input <- newIORef (GameInput 0.0 0.0)
-    output <- newIORef (GameLevel (GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship) [] [] [] [])
+    output <- newIORef (GameLevel [GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship])
     t <- getCurrentTime
     time <- newIORef t
     initGL

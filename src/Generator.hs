@@ -9,21 +9,29 @@ import System.Random
 
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
-  enemies <- generateSeveralObjects EnemyShip enemyAmount
-  asteroids <- generateSeveralObjects (Asteroid 1.0) asteroidAmount
-  return (GameLevel player enemies asteroids [] [])
+  objects <- generateSeveralObjects enemyAmount asteroidAmount
+  return (GameLevel (player:objects))
   where
       player = GameObject (Vector 0 0) (Vector 0 0) 0 Ship
 
-generateSeveralObjects :: GameObjectType -> Int -> IO [GameObject]
-generateSeveralObjects objType n = do
-  result <- replicateM n (generateGameObject objType)
-  doObjectsCollide <- checkIfObjectsOverlap result
-  if doObjectsCollide
-    then do
-      newResult <- generateSeveralObjects objType n
-      return newResult
-    else return result
+generateSeveralObjects :: Int -> Int -> IO [GameObject]
+generateSeveralObjects 0 0 = do return []
+generateSeveralObjects 0 asteroids = do
+  first <- generateGameObject (Asteroid 1.0)
+  rest <- generateSeveralObjects 0 (asteroids-1)
+  if not (checkIfObjectOverlapsWithOtherObjects first rest)
+    then return $ first:rest
+    else do
+      result <- generateSeveralObjects 0 asteroids
+      return result
+generateSeveralObjects enemies asteroids = do
+  first <- generateGameObject (EnemyShip)
+  rest <- generateSeveralObjects (enemies-1) asteroids
+  if not (checkIfObjectOverlapsWithOtherObjects first rest)
+    then return $ first:rest
+    else do
+      result <- generateSeveralObjects enemies asteroids
+      return result
 
 generateGameObject :: GameObjectType -> IO GameObject
 generateGameObject (Asteroid s) = do
@@ -38,21 +46,8 @@ generateGameObject objType = do
   o <- randomIO
   return $ GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) objType
 
-checkIfObjectsOverlap :: [GameObject] -> IO Bool
-checkIfObjectsOverlap [] = do
-  return False
-checkIfObjectsOverlap (o:os) = do
-  let a | length os > 0 = checkIfObjectOverlapsWithOtherObjects o os
-        | otherwise = False
---  print o
---  print a
-  if a
-    then return True
-    else if length os > 1
-          then checkIfObjectsOverlap os
-          else return a
-
 checkIfObjectOverlapsWithOtherObjects :: GameObject -> [GameObject] -> Bool
+checkIfObjectOverlapsWithOtherObjects o1 [] = False
 checkIfObjectOverlapsWithOtherObjects o1 (o2:os)
   | d < (r1 + r2) = True
   | (length os) > 0 = checkIfObjectOverlapsWithOtherObjects o1 os
