@@ -8,6 +8,7 @@ module Datatypes (
   Location,
   Velocity,
   Acceleration,
+  radius,
   Orientation,
   Scale
   ) where
@@ -50,7 +51,11 @@ data GameObject = GameObject {
 } deriving (Eq, Show)
 
 radius :: GameObjectType -> GLfloat
-radius = radius
+radius (Asteroid scale)     = scale * 0.05
+radius Ship                 = 0.05
+radius EnemyShip            = 0.05
+radius Projectile           = 0.02
+radius EnemyProjectile      = 0.02
 
 data GameLevel = GameLevel {
   objects :: [GameObject]

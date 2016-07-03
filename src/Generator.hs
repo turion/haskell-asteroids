@@ -3,6 +3,7 @@ module Generator (
   ) where
 
 import Graphics.UI.GLUT
+import FRP.Yampa.VectorSpace
 import Control.Monad
 import Datatypes
 import System.Random
@@ -10,41 +11,41 @@ import System.Random
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
   objects <- generateSeveralObjects enemyAmount asteroidAmount
-  return (GameLevel (player:objects))
-  where
-      player = GameObject (Vector 0 0) (Vector 0 0) 0 Ship
+  return $ GameLevel objects
 
 generateSeveralObjects :: Int -> Int -> IO [GameObject]
-generateSeveralObjects 0 0 = do return []
+generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 Ship]
 generateSeveralObjects 0 asteroids = do
-  first <- generateGameObject (Asteroid 1.0)
-  rest <- generateSeveralObjects 0 (asteroids-1)
-  if not (checkIfObjectOverlapsWithOtherObjects first rest)
-    then return $ first:rest
-    else do
-      result <- generateSeveralObjects 0 asteroids
-      return result
+  rest <- generateSeveralObjects 0 (asteroids - 1)
+  first <- generateGameObject (Asteroid 1.0) rest
+  return $ first:rest
 generateSeveralObjects enemies asteroids = do
-  first <- generateGameObject (EnemyShip)
   rest <- generateSeveralObjects (enemies-1) asteroids
-  if not (checkIfObjectOverlapsWithOtherObjects first rest)
-    then return $ first:rest
-    else do
-      result <- generateSeveralObjects enemies asteroids
-      return result
+  first <- generateGameObject EnemyShip rest
+  return $ first:rest
 
-generateGameObject :: GameObjectType -> IO GameObject
-generateGameObject (Asteroid s) = do
+generateGameObject :: GameObjectType -> [GameObject] -> IO GameObject
+generateGameObject (Asteroid s) objects = do
   randomRadius <- ([1.0, 1.5, 2.0] !!) <$> randomRIO(0,2)
   x <- randomIO
   y <- randomIO
   o <- randomIO
-  return $ GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) (Asteroid randomRadius)
-generateGameObject objType = do
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) (Asteroid randomRadius)
+  if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
+    then return newObject
+    else do
+      result <- generateGameObject (Asteroid s) objects
+      return result
+generateGameObject objType objects = do
   x <- randomIO
   y <- randomIO
   o <- randomIO
-  return $ GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) objType
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) objType
+  if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
+    then return newObject
+    else do
+       result <- generateGameObject objType objects
+       return result
 
 checkIfObjectOverlapsWithOtherObjects :: GameObject -> [GameObject] -> Bool
 checkIfObjectOverlapsWithOtherObjects o1 [] = False
@@ -53,11 +54,6 @@ checkIfObjectOverlapsWithOtherObjects o1 (o2:os)
   | (length os) > 0 = checkIfObjectOverlapsWithOtherObjects o1 os
   | otherwise = False
   where
-    r1 | gameObjectType o1 == EnemyShip = 0.05
-       | otherwise = 0.1
-    r2 | gameObjectType o2 == EnemyShip = 0.05
-       | otherwise = 0.1
-    dx = x (location o1) - x (location o2)
-    dy = y (location o1) - y (location o2)
-    dSquare = dx*dx + dy*dy
-    d = sqrt dSquare
+    r1 = radius $ gameObjectType o1
+    r2 = radius $ gameObjectType o2
+    d = norm $ location o1 ^-^ location o2
