@@ -8,6 +8,7 @@ import Graphics.UI.GLUT
 import Control.Monad
 import Datatypes
 import Generator
+import System.Random
 
 initGL ::  IO ()
 initGL     = do
@@ -49,14 +50,14 @@ drawGameObjectType EnemyShip = do
 drawGameObjectType (Asteroid s)= do
   scale s s s
   renderPrimitive Polygon $ do
-            y1 <- getRandom
-            x2 <- getRandom
-            x3 <- getRandom
-            x4 <- getRandom
-            y5 <- getRandom
-            x6 <- getRandom
-            x7 <- getRandom
-            x8 <- getRandom
+            y1 <- randomIO
+            x2 <- randomIO
+            x3 <- randomIO
+            x4 <- randomIO
+            y5 <- randomIO
+            x6 <- randomIO
+            x7 <- randomIO
+            x8 <- randomIO
             color $ Color3 (0.4 :: GLfloat) 0.4 0.4
             vertex $ (Vertex2   0               (y1 * a + a)    :: Vertex2 GLfloat)
             vertex $ (Vertex2   (x2 * b + b)    (x2 * b + b)    :: Vertex2 GLfloat)

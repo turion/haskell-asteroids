@@ -14,7 +14,5 @@ main = do
 
 display :: DisplayCallback
 display = do
-  clear [ColorBuffer]
-  level <- generateLevel 5 20
+  level <- generateLevel 5 5
   renderLevel level
-  flush

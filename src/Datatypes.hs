@@ -47,7 +47,7 @@ data GameObject = GameObject {
   velocity :: Velocity,
   orientation :: Orientation,
   gameObjectType :: GameObjectType
-}
+} deriving (Eq, Show)
 
 radius :: GameObjectType -> GLfloat
 radius = radius
@@ -58,4 +58,5 @@ data GameLevel = GameLevel {
   asteroids :: [GameObject],
   projectiles :: [GameObject],
   enemyProjectiles :: [GameObject]
-}
+} deriving (Eq, Show)
+
