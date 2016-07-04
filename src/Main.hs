@@ -27,10 +27,10 @@ animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) =
 animateTwoGameObjects :: GameObject -> GameObject -> SF (GameInput) (GameObject, GameObject)
 animateTwoGameObjects gameObject otherObject = proc (gameInput) -> do
     rec 
+        let (collisionCorrection1, collisionCorrection2) = collide gaOb otOb
         (gaOb, otOb) <- iPre (gameObject, otherObject) -< (object1, object2)
         object1 <- animateGameObject gameObject  -< (collisionCorrection1, gameInput)
         object2 <- animateGameObject otherObject  -< (collisionCorrection2, GameInput 0.0 0.0)
-        let (collisionCorrection1, collisionCorrection2) = collide gaOb otOb
     returnA -< (object1, object2)
 
 --animateGameObjects :: [GameObject] -> [SF GameInput GameObject]
