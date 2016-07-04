@@ -14,5 +14,5 @@ main = do
 
 display :: DisplayCallback
 display = do
-  level <- generateLevel 10 30
+  level <- generateLevel 10 40
   renderLevel level

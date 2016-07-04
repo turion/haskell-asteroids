@@ -5,6 +5,7 @@ module Datatypes (
   GameObjectType(..),
   GameLevel(..),
   GameObject(..),
+  Form,
   Location,
   Velocity,
   Acceleration,
@@ -21,6 +22,10 @@ data Vector = Vector {
   x :: GLfloat,
   y :: GLfloat
 } deriving (Eq, Show)
+
+data Form = Form {
+  points :: [Vector]
+}
 
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0

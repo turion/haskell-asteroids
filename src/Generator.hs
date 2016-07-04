@@ -25,26 +25,18 @@ generateSeveralObjects enemies asteroids = do
   return $ first:rest
 
 generateGameObject :: GameObjectType -> [GameObject] -> IO GameObject
-generateGameObject (Asteroid s) objects = do
+generateGameObject objType objects = do
   randomRadius <- ([1.0, 1.5, 2.0] !!) <$> randomRIO(0,2)
   x <- randomIO
   y <- randomIO
   o <- randomIO
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) (Asteroid randomRadius)
+  let newObjectType | objType == EnemyShip = objType
+                    | otherwise = Asteroid randomRadius
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) newObjectType
   if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
     then return newObject
     else do
-      result <- generateGameObject (Asteroid s) objects
-      return result
-generateGameObject objType objects = do
-  x <- randomIO
-  y <- randomIO
-  o <- randomIO
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) objType
-  if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
-    then return newObject
-    else do
-       result <- generateGameObject objType objects
+       result <- generateGameObject newObjectType objects
        return result
 
 checkIfObjectOverlapsWithOtherObjects :: GameObject -> [GameObject] -> Bool
@@ -57,3 +49,30 @@ checkIfObjectOverlapsWithOtherObjects o1 (o2:os)
     r1 = radius $ gameObjectType o1
     r2 = radius $ gameObjectType o2
     d = norm $ location o1 ^-^ location o2
+
+--generateAsteroidForm :: GameObjectType -> Form
+--generateAsteroidForm (Asteroid s) = [p1, p2, p3, p4, p5, p6, p7, p8]
+--  where
+--    p1 = (0,                  (y1 * a + a))
+--    p2 = ((x2 * b + b),       (x2 * b + b))
+--    p3 = ((x3 * a + a),                  0)
+--    p4 = ((x4 * b + b),    (-(x4 * b + b)))
+--    p5 = (0,               (-(y5 * a + a)))
+--    p6 = ((-(x6 * b + b)), (-(x6 * b + b)))
+--    p7 = ((-(x7 * a + a)),              0 )
+--    p8 = ((-(x8 * b + b)),    (x8 * b + b))
+--    a = 0.025
+--    b = 0.0175
+--    y1 = randomIO
+--    x2 = randomIO
+--    x3 = randomIO
+--    x4 = randomIO
+--    y5 = randomIO
+--    x6 = randomIO
+--    x7 = randomIO
+--    x8 = randomIO
+
+--getRandom :: GLfloat
+--getRandom = do
+--  result <- randomIO
+--  return randomIO
