@@ -1,4 +1,5 @@
 module Physics (
+    CollisionCorrection(..),
     radius,
     collide
   ) where
@@ -7,6 +8,11 @@ import Datatypes
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import FRP.Yampa.Event
+
+data CollisionCorrection = CollisionCorrection {
+  deltaLocation :: Location,
+  deltaVelocity :: Velocity
+}
 
 radius :: GameObjectType -> GLfloat
 radius (Asteroid scale)     = scale * 0.05
@@ -37,10 +43,14 @@ collide object other
     | otherwise            = (NoEvent, NoEvent) where
         v1 = velocity object
         v2 = velocity other
-        vf = v1 ^+^ v2
-        lengthvf = sqrt (norm v1 * norm v1 + norm v2 * norm v2)
-        normalization = lengthvf / norm vf
-        f1 = normalization *^ vf ^-^ v1
-        f2 = normalization *^ vf ^-^ v2
-        objectCollisionCorrection = CollisionCorrection (f1) ((-0.005) *^ v1)
-        otherCollisionCorrection = CollisionCorrection (f2) ((-0.005) *^ v2)
+        deltaV1 = v2 ^-^ v1
+        deltaV2 = v1 ^-^ v2
+        difference = location object ^-^ location other
+        distance = norm difference
+        radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
+        correction = distance - radiusSum
+        deltaP1 = (-0.01 - correction) *^ v1
+        deltaP2 = (-0.01 - correction) *^ v2
+
+        objectCollisionCorrection = CollisionCorrection deltaP1 deltaV1 
+        otherCollisionCorrection = CollisionCorrection deltaP2 deltaV2 
