@@ -37,20 +37,44 @@ overlap    object        other
 --    | overlap object other = Just $ other : (getOverlappingObjects object others)
 --    | otherwise            = getOverlappingObjects object others
 
+
+
+-- TODO? move objects back in old direction according to the "time" they've been overlapping
+-- and instead in the new direction according to that same time and the new velocities
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
     | overlap object other = (Event objectCollisionCorrection , Event otherCollisionCorrection)
     | otherwise            = (NoEvent, NoEvent) where
-        v1 = velocity object
-        v2 = velocity other
-        deltaV1 = v2 ^-^ v1
-        deltaV2 = v1 ^-^ v2
+        -- calculate collision normal
         difference = location object ^-^ location other
+        collisionNormal = (1 / norm difference) *^ difference
+
+        -- calculate parts of v1 that collide and the remainder
+        v1 = velocity object
+        v1Dot = dot collisionNormal v1
+        v1Colliding = v1Dot *^ collisionNormal
+        v1Remaining = v1 ^-^ v1Colliding
+
+        -- calculate parts of v2 that collide and the remainder
+        v2 = velocity other
+        v2Dot = dot collisionNormal v2
+        v2Colliding = v2Dot *^ collisionNormal
+        v2Remaining = v2 ^-^ v2Colliding
+
+        -- calculate results of the actually colliding parts via an inelastic collision
+        v1PostCollision = v2Colliding ^-^ v1Colliding
+        v2PostCollision = v1Colliding ^-^ v2Colliding
+
+        -- add the remaining velocities not involved in the collision
+        deltaV1 = v1PostCollision ^+^ v1Remaining
+        deltaV2 = v2PostCollision ^+^ v2Remaining
+
+        -- calculate the location correction
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = distance - radiusSum
-        deltaP1 = (-0.01 - correction) *^ v1
-        deltaP2 = (-0.01 - correction) *^ v2
+        deltaL1 = (-0.01 - correction) *^ v1
+        deltaL2 = (-0.01 - correction) *^ v2
 
-        objectCollisionCorrection = CollisionCorrection deltaP1 deltaV1 
-        otherCollisionCorrection = CollisionCorrection deltaP2 deltaV2 
+        objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
+        otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2 
