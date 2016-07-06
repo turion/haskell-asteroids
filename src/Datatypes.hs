@@ -15,10 +15,13 @@ module Datatypes (
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 
+
+-- Basic types: Vector, GLfloat + types --
+
 data Vector = Vector {
   x :: GLfloat,
   y :: GLfloat
-  } deriving (Eq, Show)
+} deriving (Eq, Show)
 
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
@@ -30,6 +33,7 @@ type Location = Vector
 type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
+
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
   (*^) = (*)
@@ -37,6 +41,9 @@ instance VectorSpace Orientation GLfloat where
   dot = (*)
 
 type Scale = GLfloat
+
+
+-- Game types: GameObjectType, GameObject, GameLevel --
 
 data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
    deriving (Eq, Show)
@@ -46,10 +53,7 @@ data GameObject = GameObject {
   velocity :: Velocity,
   orientation :: Orientation,
   gameObjectType :: GameObjectType
-  }
-
-radius :: GameObjectType -> GLfloat
-radius = radius
+}  deriving (Eq, Show)
 
 data GameLevel = EmptyLevel | GameLevel {
   player :: GameObject,
@@ -58,4 +62,3 @@ data GameLevel = EmptyLevel | GameLevel {
   projectiles :: [GameObject],
   enemyProjectiles :: [GameObject]
 }
-

@@ -13,34 +13,35 @@ import Control.Concurrent
 import Datatypes
 import UI
 import Graphics
+import Physics
 
 -- iX stands for the initial value of X
-animateGameObject :: GameObject ->                                             SF GameInput GameObject
-animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (GameInput acceleration deltaOrientation) -> do
-    orientation <- (iOrientation+) ^<< integral -< deltaOrientation
-    velocity    <- (iVelocity ^+^) ^<< integral -< acceleration *^ Vector (-sin orientation) (cos orientation)
-    location    <- (iLocation ^+^) ^<< integral -< velocity
+animateGameObject :: GameObject ->                                             SF (Event CollisionCorrection, GameInput) GameObject
+animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (collisionCorrection, gameInput) -> do
+    orientation <- (iOrientation+) ^<< integral -< turn gameInput
+    let acc = acceleration gameInput *^ Vector (-sin orientation) (cos orientation)
+    velocity    <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
+    location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
     returnA     -< GameObject location velocity orientation gameObjectType
 
+animateTwoGameObjects :: GameObject -> GameObject -> SF (GameInput) (GameObject, GameObject)
+animateTwoGameObjects gameObject otherObject = proc (gameInput) -> do
+    rec 
+        let (collisionCorrection1, collisionCorrection2) = collide gaOb otOb
+        (gaOb, otOb) <- iPre (gameObject, otherObject) -< (object1, object2)
+        object1 <- animateGameObject gameObject  -< (collisionCorrection1, gameInput)
+        object2 <- animateGameObject otherObject  -< (collisionCorrection2, GameInput 0.0 0.0)
+    returnA -< (object1, object2)
 
-animateGameObjects :: [GameObject] -> SF GameInput [GameObject]
-animateGameObjects    []              = proc (input) -> do
-    returnA    -< []
-animateGameObjects (iGameObject:tail) = proc (input) -> do
-    gameObject <- animateGameObject iGameObject -< input
-    animateGameObjects tail                     -< input
-    returnA    -< (gameObject:tail)
+--animateGameObjects :: [GameObject] -> [SF GameInput GameObject]
+--animateGameObjects = animateGameObjects
 
 
 -- iX stands for the initial value of X
-game :: GameLevel ->                                                        SF GameInput GameLevel
-game (GameLevel iPlayer iEnemies iAsteroids iProjectiles iEnemyProjectiles) = proc (gameInput) -> do
-    player           <- animateGameObject iPlayer            -< gameInput
-    enemies          <- animateGameObjects iEnemies          -< GameInput 0.0 0.0
-    asteroids        <- animateGameObjects iAsteroids        -< GameInput 0.0 0.0
-    projectiles      <- animateGameObjects iProjectiles      -< GameInput 0.0 0.0
-    enemyProjectiles <- animateGameObjects iEnemyProjectiles -< GameInput 0.0 0.0
-    returnA          -< GameLevel player enemies asteroids iProjectiles iEnemyProjectiles
+game :: (GameObject, GameObject) -> SF GameInput GameLevel
+game (iPlayer, iAsteroid)            = proc (gameInput) -> do
+    (player, asteroid) <- animateTwoGameObjects iPlayer iAsteroid -< gameInput
+    returnA            -< GameLevel player [] [asteroid] [] []
 
 
 -- Main
@@ -52,8 +53,8 @@ main    = do
     t <- getCurrentTime
     time <- newIORef t
     window <- initGL
-    handle <- reactInit (return (GameInput 0.0 0.0)) (actuator output) $ game initialGameLevel
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window input $ Event $ Keyboard key keyState modifiers)
+    handle <- reactInit (return (GameInput 0.0 0.0)) (actuator output) $ game initialGameState
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
     displayCallback $= (readIORef output >>= renderLevel)
     t' <- getCurrentTime
@@ -79,8 +80,8 @@ actuator    output             _                                  _       gameLe
     writeIORef output gameLevel
     return False
 
-initialGameLevel :: GameLevel
-initialGameLevel = (GameLevel initialShip initialEnemies initialAsteroids [] [])
+initialGameState :: (GameObject, GameObject)
+initialGameState = (initialShip, initialAsteroid)
 
 initialShip :: GameObject
 initialShip = GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship
@@ -88,5 +89,5 @@ initialShip = GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship
 initialEnemies :: [GameObject]
 initialEnemies = []
 
-initialAsteroids :: [GameObject]
-initialAsteroids = [(GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0))]
+initialAsteroid :: GameObject
+initialAsteroid = GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0)
