@@ -41,7 +41,7 @@ animateTwoGameObjects gameObject otherObject = proc (gameInput) -> do
 game :: (GameObject, GameObject) -> SF GameInput GameLevel
 game (iPlayer, iAsteroid)            = proc (gameInput) -> do
     (player, asteroid) <- animateTwoGameObjects iPlayer iAsteroid -< gameInput
-    returnA            -< GameLevel player [] [asteroid] [] []
+    returnA            -< GameLevel [player, asteroid]
 
 
 -- Main

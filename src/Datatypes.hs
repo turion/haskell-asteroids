@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Datatypes (
   Vector(..),
   GameObjectType(..),
@@ -52,12 +54,12 @@ data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProj
 
 data GameObject = GameObject {
   location :: Location,
-  orientation :: Orientation,
   velocity :: Velocity,
+  orientation :: Orientation,
   gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 
-data GameLevel = GameLevel {
+data GameLevel = EmptyLevel | GameLevel {
   objects :: [GameObject]
 } deriving (Eq, Show)
 
