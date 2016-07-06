@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 module Datatypes (
   Vector(..),
   GameObjectType(..),
@@ -9,14 +7,15 @@ module Datatypes (
   Location,
   Velocity,
   Acceleration,
-  radius,
   Orientation,
   Scale
   ) where
 
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
-import System.Random
+
+
+-- Basic types: Vector, GLfloat + types --
 
 data Vector = Vector {
   x :: GLfloat,
@@ -45,22 +44,18 @@ instance VectorSpace Orientation GLfloat where
   (^+^) = (+)
   dot = (*)
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
+
+-- Game types: GameObjectType, GameObject, GameLevel --
+
+data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
   location :: Location,
-  velocity :: Velocity,
   orientation :: Orientation,
+  velocity :: Velocity,
   gameObjectType :: GameObjectType
-} deriving (Eq, Show)
-
-radius :: GameObjectType -> GLfloat
-radius (Asteroid scale shape)     = scale * 0.05
-radius Ship                 = 0.05
-radius EnemyShip            = 0.05
-radius Projectile           = 0.02
-radius EnemyProjectile      = 0.02
+}  deriving (Eq, Show)
 
 data GameLevel = GameLevel {
   objects :: [GameObject]
