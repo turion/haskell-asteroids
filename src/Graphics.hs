@@ -70,7 +70,7 @@ drawGameObjectType EnemyProjectile = do
                                  ( 0.005, -0.020),
                                  (-0.005, -0.020),
                                  (-0.005,  0.020)]
-        
+
 drawGameObject ::   GameObject ->   IO ()
 drawGameObject      GameObject { location = location, orientation = orientation, gameObjectType = gameObjectType}     = do
     preservingMatrix $ do
@@ -78,15 +78,8 @@ drawGameObject      GameObject { location = location, orientation = orientation,
         rotate (orientation * 360 / (2 * pi)) $ Vector3 0 0 1       --degree or radians?
         drawGameObjectType gameObjectType
 
-drawListOfGameObjects :: [GameObject] -> IO ()
-drawListOfGameObjects = mapM_ drawGameObject
-
 renderLevel :: GameLevel -> IO ()
-renderLevel (GameLevel {player = p, enemies = e, asteroids = a, projectiles = ps, enemyProjectiles = eps}) = preservingMatrix $ do
+renderLevel (GameLevel objects) = preservingMatrix $ do
      clear[ColorBuffer]
-     drawGameObject p
-     drawListOfGameObjects e
-     drawListOfGameObjects a
-     drawListOfGameObjects ps
-     drawListOfGameObjects eps
+     mapM_ drawGameObject objects
      swapBuffers

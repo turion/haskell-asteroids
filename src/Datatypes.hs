@@ -1,10 +1,9 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 module Datatypes (
   Vector(..),
   GameObjectType(..),
   GameLevel(..),
   GameObject(..),
+  Shape(..),
   Location,
   Velocity,
   Acceleration,
@@ -23,6 +22,10 @@ data Vector = Vector {
   y :: GLfloat
 } deriving (Eq, Show)
 
+data Shape = Shape {
+  points :: [Vector]
+} deriving (Eq, Show)
+
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
   a *^ Vector x y = Vector (a*x) (a*y)
@@ -33,14 +36,13 @@ type Location = Vector
 type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
+type Scale = GLfloat
 
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
   (*^) = (*)
   (^+^) = (+)
   dot = (*)
-
-type Scale = GLfloat
 
 
 -- Game types: GameObjectType, GameObject, GameLevel --
@@ -50,15 +52,12 @@ data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProj
 
 data GameObject = GameObject {
   location :: Location,
-  velocity :: Velocity,
   orientation :: Orientation,
+  velocity :: Velocity,
   gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 
-data GameLevel = EmptyLevel | GameLevel {
-  player :: GameObject,
-  enemies :: [GameObject],
-  asteroids :: [GameObject],
-  projectiles :: [GameObject],
-  enemyProjectiles :: [GameObject]
-}
+data GameLevel = GameLevel {
+  objects :: [GameObject]
+} deriving (Eq, Show)
+

@@ -12,7 +12,7 @@ import Data.IORef
 
 import Datatypes
 
-data KeyboardInput = KeyboardInput { 
+data KeyboardInput = KeyboardInput {
     key       :: Key,
     keyState  :: KeyState,
     modifiers :: Modifiers
@@ -29,7 +29,7 @@ handleInput    window    _               (Event (KeyboardInput (Char 'q') (Down)
 handleInput    _         gameInput       userInput       = do
     oldInput <- readIORef gameInput
     writeIORef gameInput $ GameInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
-    return ()    
+    return ()
 
 parseAcceleration :: GameInput -> Event KeyboardInput ->                                    Acceleration
 parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyUp)    (Down) _)) =  1.0
