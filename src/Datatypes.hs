@@ -5,7 +5,7 @@ module Datatypes (
   GameObjectType(..),
   GameLevel(..),
   GameObject(..),
-  Form,
+  Shape(..),
   Location,
   Velocity,
   Acceleration,
@@ -23,9 +23,9 @@ data Vector = Vector {
   y :: GLfloat
 } deriving (Eq, Show)
 
-data Form = Form {
+data Shape = Shape {
   points :: [Vector]
-}
+} deriving (Eq, Show)
 
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
@@ -45,7 +45,7 @@ instance VectorSpace Orientation GLfloat where
   (^+^) = (+)
   dot = (*)
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
+data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
@@ -56,7 +56,7 @@ data GameObject = GameObject {
 } deriving (Eq, Show)
 
 radius :: GameObjectType -> GLfloat
-radius (Asteroid scale)     = scale * 0.05
+radius (Asteroid scale shape)     = scale * 0.05
 radius Ship                 = 0.05
 radius EnemyShip            = 0.05
 radius Projectile           = 0.02

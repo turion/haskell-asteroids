@@ -48,28 +48,11 @@ drawGameObjectType EnemyShip = do
               c2 = 0.0
               c3 = 0.0 in
               drawQuad x2 y2 x1 y1 x4 y4 x3 y3 c1 c2 c3
-drawGameObjectType (Asteroid s)= do
+drawGameObjectType (Asteroid s (Shape vectors)) = do
   scale s s s
   renderPrimitive Polygon $ do
-            y1 <- randomIO
-            x2 <- randomIO
-            x3 <- randomIO
-            x4 <- randomIO
-            y5 <- randomIO
-            x6 <- randomIO
-            x7 <- randomIO
-            x8 <- randomIO
             color $ Color3 (0.4 :: GLfloat) 0.4 0.4
-            vertex $ (Vertex2   0               (y1 * a + a)    :: Vertex2 GLfloat)
-            vertex $ (Vertex2   (x2 * b + b)    (x2 * b + b)    :: Vertex2 GLfloat)
-            vertex $ (Vertex2   (x3 * a + a)    0               :: Vertex2 GLfloat)
-            vertex $ (Vertex2   (x4 * b + b)    (-(x4 * b + b)) :: Vertex2 GLfloat)
-            vertex $ (Vertex2   0               (-(y5 * a + a)) :: Vertex2 GLfloat)
-            vertex $ (Vertex2   (-(x6 * b + b)) (-(x6 * b + b)) :: Vertex2 GLfloat)
-            vertex $ (Vertex2   (-(x7 * a + a)) 0               :: Vertex2 GLfloat)
-            vertex $ (Vertex2   (-(x8 * b + b)) (x8 * b + b)    :: Vertex2 GLfloat)
-            where a = 0.025
-                  b = 0.0175
+            drawAsteroid vectors
 drawGameObjectType Projectile = do
           let x1 = 0.005
               y1 = 0.02
@@ -96,6 +79,12 @@ drawGameObjectType EnemyProjectile = do
               c2 = 0.3
               c3 = 0.3 in
               drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3
+
+drawAsteroid :: [Vector] -> IO()
+drawAsteroid [] = do return ()
+drawAsteroid vectors = do
+            vertex $ (Vertex2 (x (head vectors)) (y (head vectors)) :: Vertex2 GLfloat)
+            drawAsteroid $ tail vectors
 
 drawQuad :: GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> GLfloat -> IO ()
 drawQuad x1 y1 x2 y2 x3 y3 x4 y4 c1 c2 c3 = do
