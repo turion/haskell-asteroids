@@ -5,6 +5,7 @@ module Graphics (
   ) where
 
 import Graphics.UI.GLUT
+import Graphics.Rendering.FTGL
 
 import Datatypes
 
@@ -32,7 +33,6 @@ drawPolygon    (r, g, b)                      points = do
                 vertex $ (Vertex3   x    y  0)
                 drawPoints others
 
-
 -- Game functions: drawGameObjectType, drawGameObject, drawListOfGameObjects, drawGameLevel --
 
 drawGameObjectType :: GameObjectType -> IO ()
@@ -46,20 +46,9 @@ drawGameObjectType EnemyShip = do
                                  ( 0.050, -0.050),
                                  ( 0.000, -0.025),
                                  (-0.050, -0.050)]
-drawGameObjectType (Asteroid s)= do
+drawGameObjectType (Asteroid s (Shape shape))= do
     scale s s s
-    drawPolygon (0.4, 0.4, 0.4) [( 0.000,  0.050),
-                                 ( 0.040,  0.030),
-                                 ( 0.030,  0.040),
-                                 ( 0.050,  0.000),
-                                 ( 0.030, -0.040),
-                                 ( 0.040, -0.030),
-                                 ( 0.000, -0.050),
-                                 (-0.040, -0.030),
-                                 (-0.030, -0.040),
-                                 (-0.050,  0.000),
-                                 (-0.050,  0.000),
-                                 (-0.040,  0.030)]
+    drawPolygon (0.4, 0.4, 0.4) [(x vector, y vector) | vector <- shape]        --TODO test this
 drawGameObjectType Projectile = do
     drawPolygon (0.0, 1.0, 0.0) [( 0.005,  0.020),
                                  ( 0.005, -0.020),
@@ -82,4 +71,13 @@ renderLevel :: GameLevel -> IO ()
 renderLevel (GameLevel objects) = preservingMatrix $ do
      clear[ColorBuffer]
      mapM_ drawGameObject objects
+     font <- createTextureFont "FreeSans.ttf"
+     setFontFaceSize font 24 72
+     renderFont font "Haskelloids" Graphics.Rendering.FTGL.Front
      swapBuffers
+
+showText :: IO ()
+showText = do
+  font <- createTextureFont "FreeSans.ttf"
+  setFontFaceSize font 24 72
+  renderFont font "Haskelloids" Graphics.Rendering.FTGL.Front

@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Datatypes (
   Vector(..),
   GameObjectType(..),
@@ -47,17 +49,17 @@ instance VectorSpace Orientation GLfloat where
 
 -- Game types: GameObjectType, GameObject, GameLevel --
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
+data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
   location :: Location,
-  orientation :: Orientation,
   velocity :: Velocity,
+  orientation :: Orientation,
   gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 
-data GameLevel = GameLevel {
+data GameLevel = EmptyLevel | GameLevel {
   objects :: [GameObject]
 } deriving (Eq, Show)
 

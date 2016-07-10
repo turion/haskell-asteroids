@@ -7,6 +7,7 @@ import FRP.Yampa.VectorSpace
 import Control.Monad
 import Datatypes
 import System.Random
+import Physics
 
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
@@ -62,14 +63,14 @@ generateAsteroidShape = do
   x7 <- randomIO
   x8 <- randomIO
   let
-    p1 = Vector 0                  (y1 * a + a)
-    p2 = Vector (x2 * b + b)       (x2 * b + b)
-    p3 = Vector (x3 * a + a)                  0
-    p4 = Vector (x4 * b + b)    (-(x4 * b + b))
-    p5 = Vector 0               (-(y5 * a + a))
-    p6 = Vector (-(x6 * b + b)) (-(x6 * b + b))
-    p7 = Vector (-(x7 * a + a))               0
-    p8 = Vector (-(x8 * b + b))    (x8 * b + b)
-    a = 0.025
-    b = 0.0175
+    p1 = Vector 0                  (y1 * a + 2*a)
+    p2 = Vector (x2 * b + 2*b)       (x2 * b + 2*b)
+    p3 = Vector (x3 * a + 2*a)                  0
+    p4 = Vector (x4 * b + 2*b)    (-(x4 * b + 2*b))
+    p5 = Vector 0               (-(y5 * a + 2*a))
+    p6 = Vector (-(x6 * b + 2*b)) (-(x6 * b + 2*b))
+    p7 = Vector (-(x7 * a + 2*a))               0
+    p8 = Vector (-(x8 * b + 2*b))    (x8 * b + 2*b)
+    a = 0.013
+    b = 0.01
   return $ Shape [p1, p2, p3, p4, p5, p6, p7, p8]

@@ -15,7 +15,7 @@ data CollisionCorrection = CollisionCorrection {
 }
 
 radius :: GameObjectType -> GLfloat
-radius (Asteroid scale)     = scale * 0.05
+radius (Asteroid scale shape)     = scale * 0.05     -- TODO get radius from shape
 radius Ship                 = 0.05
 radius EnemyShip            = 0.05
 radius Projectile           = 0.02
