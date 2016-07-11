@@ -90,4 +90,17 @@ initialEnemies :: [GameObject]
 initialEnemies = []
 
 initialAsteroid :: GameObject
-initialAsteroid = GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0)
+initialAsteroid = GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0 shape) where
+    shape = Shape [  (Vector   0.000    0.050 ),
+                     (Vector   0.040    0.030 ),
+                     (Vector   0.030    0.040 ),
+                     (Vector   0.050    0.000 ),
+                     (Vector   0.030  (-0.040)),
+                     (Vector   0.040  (-0.030)),
+                     (Vector   0.000  (-0.050)),
+                     (Vector (-0.040) (-0.030)),
+                     (Vector (-0.030) (-0.040)),
+                     (Vector (-0.050)   0.000 ),
+                     (Vector (-0.050)   0.000 ),
+                     (Vector (-0.040)   0.030 )]
+

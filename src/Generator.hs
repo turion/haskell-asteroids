@@ -5,8 +5,10 @@ module Generator (
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import Control.Monad
-import Datatypes
 import System.Random
+
+import Datatypes
+import Physics
 
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
