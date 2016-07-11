@@ -49,7 +49,7 @@ instance VectorSpace Orientation GLfloat where
 
 -- Game types: GameObjectType, GameObject, GameLevel --
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale | Projectile | EnemyProjectile
+data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
