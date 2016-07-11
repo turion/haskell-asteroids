@@ -72,9 +72,9 @@ collide object other
         -- calculate the location correction
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
-        correction = distance - radiusSum
-        deltaL1 = (-0.01 + correction) *^ v1
-        deltaL2 = (-0.01 + correction) *^ v2
+        correction = radiusSum - distance
+        deltaL1 = (-0.01 - correction) *^ v1
+        deltaL2 = (-0.01 - correction) *^ v2
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2 

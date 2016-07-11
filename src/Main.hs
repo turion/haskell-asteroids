@@ -24,24 +24,62 @@ animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) =
     location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
     returnA     -< GameObject location velocity orientation gameObjectType
 
-animateTwoGameObjects :: GameObject -> GameObject -> SF (GameInput) (GameObject, GameObject)
+animateTwoGameObjects :: GameObject -> GameObject -> SF GameInput (GameObject, GameObject)
 animateTwoGameObjects gameObject otherObject = proc (gameInput) -> do
     rec 
         let (collisionCorrection1, collisionCorrection2) = collide gaOb otOb
         (gaOb, otOb) <- iPre (gameObject, otherObject) -< (object1, object2)
-        object1 <- animateGameObject gameObject  -< (collisionCorrection1, gameInput)
-        object2 <- animateGameObject otherObject  -< (collisionCorrection2, GameInput 0.0 0.0)
+        let input = if gameObjectType gameObject == Ship then gameInput else  GameInput 0.0 0.0
+        object1 <- animateGameObject gameObject   -< (collisionCorrection1, input)
+        let otherInput = if gameObjectType otherObject == Ship then gameInput else  GameInput 0.0 0.0
+        object2 <- animateGameObject otherObject  -< (collisionCorrection2, otherInput)
     returnA -< (object1, object2)
 
---animateGameObjects :: [GameObject] -> [SF GameInput GameObject]
---animateGameObjects = animateGameObjects
+--animateGameObjectWithAllOthers:: GameObject -> [GameObject] -> SF GameInput (GameObject, [GameObject])
+--animateGameObjectWithAllOthers iObject []               =  proc (gameInput) -> do
+--    let input = if gameObjectType iObject == Ship then gameInput else  GameInput 0.0 0.0
+--    object  <- animateGameObject iObject            -< (NoEvent, input)
+--    returnA -< (object, [])
+--animateGameObjectWithAllOthers iObject iOthers = proc (gameInput) -> do
+--    ((object:objects), _) <- animateGameObjectWithAllOthersInner [iObject] iOthers -< gameInput
+--    returnA               -< (object, objects)
+
+--animateGameObjectWithAllOthersInner :: [GameObject] -> [GameObject] -> SF GameInput ([GameObject], [GameObject])
+--animateGameObjectWithAllOthersInner (objects)          []               = proc (gameInput) -> do
+--    returnA -< (objects, [])
+--animateGameObjectWithAllOthersInner (iObject:iObjects) (iOther:iOthers) = proc (gameInput) -> do
+--    (object, other)   <- animateTwoGameObjects iObject iOther                                       -< gameInput
+--    (objects, others) <- animateGameObjectWithAllOthersInner ((ob:iObjects) ++ [ot]) iOthers -< (gameInput, object, other)
+--    returnA         -< (objects, others)
 
 
--- iX stands for the initial value of X
-game :: (GameObject, GameObject) -> SF GameInput GameLevel
-game (iPlayer, iAsteroid)            = proc (gameInput) -> do
-    (player, asteroid) <- animateTwoGameObjects iPlayer iAsteroid -< gameInput
-    returnA            -< GameLevel [player, asteroid]
+--game :: GameLevel ->                      SF GameInput GameLevel
+--game (GameLevel [])                    = proc (input) -> do
+--    returnA         -< GameLevel []
+--game (GameLevel (iObject:iTail))       = proc (input) -> do
+--    (object, tail) <- animateGameObjectWithAllOthers iObject iTail -< input
+--    -- same as above: was: game (GameLevel tail)
+--    (GameLevel objects) <- game (GameLevel iTail) -< input
+--    returnA         -< GameLevel $ [object] ++ objects
+
+-- colliding works for the first and second, third and fourth object etc.
+game :: GameLevel ->                      SF GameInput GameLevel
+game    (GameLevel [])                    = proc (input) -> do
+    returnA         -< GameLevel []
+game    (GameLevel (iObject:[]))          = proc (input) -> do
+    object          <- animateGameObject iObject            -< (NoEvent, input)
+    returnA         -< GameLevel [object]
+game (GameLevel (iObject:(iOther:iTail))) = proc (input) -> do
+    (object, other) <- animateTwoGameObjects iObject iOther -< input
+    tail            <- game (GameLevel iTail)               -< input
+    returnA         -< GameLevel (object:(other:(objects tail)))
+
+---- animates only two objects
+---- iX stands for the initial value of X
+--game :: (GameObject, GameObject) -> SF GameInput GameLevel
+--game (iPlayer, iAsteroid)            = proc (gameInput) -> do
+--    (player, asteroid) <- animateTwoGameObjects iPlayer iAsteroid -< gameInput
+--    returnA            -< GameLevel [player, asteroid]
 
 
 -- Main
@@ -80,8 +118,8 @@ actuator    output             _                                  _       gameLe
     writeIORef output gameLevel
     return False
 
-initialGameState :: (GameObject, GameObject)
-initialGameState = (initialShip, initialAsteroid)
+initialGameState :: GameLevel
+initialGameState = GameLevel [initialAsteroid, otherAsteroid, thirdAsteroid, initialShip]
 
 initialShip :: GameObject
 initialShip = GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship
@@ -91,6 +129,36 @@ initialEnemies = []
 
 initialAsteroid :: GameObject
 initialAsteroid = GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0 shape) where
+    shape = Shape [  (Vector   0.000    0.050 ),
+                     (Vector   0.040    0.030 ),
+                     (Vector   0.030    0.040 ),
+                     (Vector   0.050    0.000 ),
+                     (Vector   0.030  (-0.040)),
+                     (Vector   0.040  (-0.030)),
+                     (Vector   0.000  (-0.050)),
+                     (Vector (-0.040) (-0.030)),
+                     (Vector (-0.030) (-0.040)),
+                     (Vector (-0.050)   0.000 ),
+                     (Vector (-0.050)   0.000 ),
+                     (Vector (-0.040)   0.030 )]
+
+otherAsteroid :: GameObject
+otherAsteroid = GameObject (Vector (-0.5) (-0.5)) (Vector 0.0 0.1) 0.0 (Asteroid 1.0 shape) where
+    shape = Shape [  (Vector   0.000    0.050 ),
+                     (Vector   0.040    0.030 ),
+                     (Vector   0.030    0.040 ),
+                     (Vector   0.050    0.000 ),
+                     (Vector   0.030  (-0.040)),
+                     (Vector   0.040  (-0.030)),
+                     (Vector   0.000  (-0.050)),
+                     (Vector (-0.040) (-0.030)),
+                     (Vector (-0.030) (-0.040)),
+                     (Vector (-0.050)   0.000 ),
+                     (Vector (-0.050)   0.000 ),
+                     (Vector (-0.040)   0.030 )]
+
+thirdAsteroid :: GameObject
+thirdAsteroid = GameObject (Vector 0.5 (-0.5)) (Vector 0.0 0.1) 0.0 (Asteroid 1.0 shape) where
     shape = Shape [  (Vector   0.000    0.050 ),
                      (Vector   0.040    0.030 ),
                      (Vector   0.030    0.040 ),
