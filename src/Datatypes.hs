@@ -5,6 +5,7 @@ module Datatypes (
   GameObjectType(..),
   GameLevel(..),
   GameObject(..),
+  GameState(..),
   Shape(..),
   Location,
   Velocity,
@@ -63,3 +64,8 @@ data GameLevel = EmptyLevel | GameLevel {
   objects :: [GameObject]
 } deriving (Eq, Show)
 
+data GameState = GameState {
+  level :: Int,
+  lifeCount :: Int,
+  score :: Integer
+}
