@@ -37,9 +37,7 @@ generateGameObject objType objects = do
   let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) newObjectType
   if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
     then return newObject
-    else do
-       result <- generateGameObject newObjectType objects
-       return result
+    else generateGameObject newObjectType objects
 
 checkIfObjectOverlapsWithOtherObjects :: GameObject -> [GameObject] -> Bool
 checkIfObjectOverlapsWithOtherObjects o1 [] = False
@@ -62,6 +60,7 @@ generateAsteroidShape = do
   x6 <- randomIO
   x7 <- randomIO
   x8 <- randomIO
+  --z8 <- randomRIO (b, 3*b)
   let
     p1 = Vector 0                  (y1 * a + 2*a)
     p2 = Vector (x2 * b + 2*b)       (x2 * b + 2*b)

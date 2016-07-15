@@ -3,11 +3,15 @@ module Graphics (
     reshape,
     renderLevel,
     showText,
-    showGameState
+    showGameState,
+    TextType(..),
+    initFonts
   ) where
 
 import Graphics.UI.GLUT
 import Graphics.Rendering.FTGL
+import Data.IORef
+import Data.Time.Clock
 
 import Datatypes
 
@@ -22,7 +26,17 @@ initGL     = do
 
 reshape :: ReshapeCallback
 reshape size = do
-  viewport $= (Position 0 0, Size 900 900)
+  ss <- screenSize
+  viewport $= (Position (getDistanceFromBorderToMakeScreenCentered ss) 0, modifySizeToSquare ss)
+
+modifySizeToSquare :: Size -> Size
+modifySizeToSquare (Size x y)  | x >= y    = Size y y
+                               | otherwise = Size x x
+
+getDistanceFromBorderToMakeScreenCentered :: Size -> GLsizei
+getDistanceFromBorderToMakeScreenCentered (Size x y)
+    | x > y     = quot (x - y) 2
+    | otherwise = quot (y - x) 2
 
 -- expects a color vector and a list of points
 drawPolygon :: (GLfloat, GLfloat, GLfloat) -> [(GLfloat, GLfloat)] -> IO ()
@@ -73,32 +87,48 @@ renderLevel :: GameLevel -> IO ()
 renderLevel (GameLevel objects) = preservingMatrix $ do
      clear[ColorBuffer]
      mapM_ drawGameObject objects
+     drawBorder
      swapBuffers
 
---          text     position    color      scale       type (0 - title, 1 - regular)
-showText :: String -> Vector -> [GLfloat] -> GLfloat -> Int -> IO ()
-showText text (Vector x y) fontColors s 0 = preservingMatrix $ do
+drawBorder :: IO ()
+drawBorder = do
+  color $ Color3 (0.5 :: GLfloat) 0 0.5
+  renderPrimitive LineLoop $ do
+    vertex $ Vertex2 (-a :: GLfloat) (-a)
+    vertex $ Vertex2 (-a :: GLfloat) a
+    vertex $ Vertex2 (a :: GLfloat) a
+    vertex $ Vertex2 (a :: GLfloat) (-a)
+    where a = 0.999
+
+data TextType = Title | Regular
+
+--          text     position    color      scale      fonts      type (0 - title, 1 - regular)
+showText :: String -> Vector -> [GLfloat] -> GLfloat -> Fonts -> TextType -> IO ()
+showText text (Vector x y) fontColors s fonts Title = preservingMatrix $ do
   viewport $= (Position 0 0, Size 900 900)
   color $ Color3 (fontColors !! 0) (fontColors !! 1) (fontColors !! 2)
-  scale s s s
+  ss <- screenSize
+  viewport $= (Position (getDistanceFromBorderToMakeScreenCentered ss) 0, modifySizeToSquare ss)
   translate $ Vector3 x y 0
-  font <- createOutlineFont "FontTitle.ttf"
-  setFontFaceSize font 1 1
-  renderFont font text All
-  swapBuffers
-showText text (Vector x y) fontColors s 1 = preservingMatrix $ do
   scale s s s
-  translate $ Vector3 x y 0
+  renderFont (fonts !! 0) text All
+showText text (Vector x y) fontColors s fonts Regular = preservingMatrix $ do
   color $ Color3 (fontColors !! 0) (fontColors !! 1) (fontColors !! 2)
-  font <- createOutlineFont "FontNormal.ttf"
-  setFontFaceSize font 1 1
-  l <- createSimpleLayout
-  setLayoutFont l font
-  setLayoutAlignment l AlignCenter
-  setLayoutLineLength l 20.0
-  renderLayout l text
-  swapBuffers
+  translate $ Vector3 x y 0
+  scale s s s
+  renderFont (fonts !! 1) text All
 
-showGameState :: GameState -> IO()
-showGameState (GameState {level = l, lifeCount = lc, score = s})  = do
-  showText ("Lives: " ++ show lc ++ "              Level " ++ show l ++ "              Score: " ++ show s) (Vector (-10.0) (15.0)) [0.4, 0.8, 0.4] 0.06 1
+showGameState :: GameState -> IORef UTCTime -> Fonts -> IO()
+showGameState (GameState {level = l, lifeCount = lc, score = s}) time fonts  = do
+  now <- getCurrentTime
+  before <- readIORef time
+  let deltaTime = realToFrac $ diffUTCTime now before
+  showText ("Lives: " ++ show lc ++ "   Level " ++ show l ++ "   Score: " ++ show s ++ "   Time: " ++ show deltaTime) (Vector (-0.65) (0.93)) [0.4, 0.8, 0.4] 0.06 fonts Regular
+
+initFonts :: IO Fonts
+initFonts = do
+  fontNormal <- createOutlineFont "FontNormal.ttf"
+  fontTitle <- createOutlineFont "FontTitle.ttf"
+  setFontFaceSize fontNormal 1 1
+  setFontFaceSize fontTitle 1 1
+  return $ fontTitle : fontNormal : []
