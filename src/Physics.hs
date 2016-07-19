@@ -1,5 +1,4 @@
 module Physics (
-    CollisionCorrection(..),
     radius,
     collide
   ) where
@@ -11,11 +10,6 @@ import FRP.Yampa.VectorSpace
 import FRP.Yampa.Event
 
 -- Collisions
-
-data CollisionCorrection = CollisionCorrection {
-  deltaLocation :: Location,
-  deltaVelocity :: Velocity
-} deriving (Eq, Show)
 
 radius :: GameObjectType -> GLfloat
 radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
