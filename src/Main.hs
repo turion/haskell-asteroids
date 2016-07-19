@@ -26,58 +26,34 @@ animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) =
     location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
     returnA     -< GameObject location velocity orientation gameObjectType
 
-animateTwoGameObjects :: GameObject -> GameObject -> SF UserInput (GameObject, GameObject)
-animateTwoGameObjects gameObject otherObject = proc (input) -> do
-    rec 
-        let (collisionCorrection1, collisionCorrection2) = collide gaOb otOb
-        (gaOb, otOb) <- iPre (gameObject, otherObject) -< (object1, object2)
-        object1 <- animateGameObject gameObject   -< (collisionCorrection1, input)
-        object2 <- animateGameObject otherObject  -< (collisionCorrection2, input)
-    returnA -< (object1, object2)
-
 --lists are not necessarily of same size --> use length of list (maybe)
 type CollisionEvents = [Event CollisionCorrection]
 
 animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput) GameLevel
 animateManyObjects    (GameLevel [])                 = arr $ const $ GameLevel []
 animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input) -> do
-    object <- animateGameObject iObject -< (event, input)
+    object              <- animateGameObject iObject               -< (event, input)
     (GameLevel objects) <- animateManyObjects (GameLevel iObjects) -< (events, input)
-    returnA -< GameLevel (object:objects)
-
+    returnA             -< GameLevel (object:objects)
 
 collideAll :: GameLevel ->        CollisionEvents
 collideAll    (GameLevel [])      = []
 collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel objects)) where
-    collideWithRest :: [GameObject] -> CollisionEvents -> CollisionEvents
-    collideWithRest    []              collisionEvents    = collisionEvents
-    collideWithRest    (object:objects) events            = parallelAdd [collideWithAllOthers object objects, restEvents] where
+    collideWithRest :: [GameObject] ->  CollisionEvents -> CollisionEvents
+    collideWithRest    []               collisionEvents    = collisionEvents
+    collideWithRest    (object:objects) events             = parallelAdd [collideWithAllOthers object objects, restEvents] where
         restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
 
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CollisionEvents] -> CollisionEvents
 parallelAdd                         = map sumEvents . transpose
 
-cleanFromDuplication :: CollisionEvents -> CollisionEvents
-cleanFromDuplication                       = map halveEvent
-
-halveEvent :: Event CollisionCorrection -> Event CollisionCorrection
-halveEvent    NoEvent                      = NoEvent
-halveEvent    (Event cc)                   = Event $ CollisionCorrection ((1/2) *^ deltaLocation cc) ((1/2) *^ deltaVelocity cc)
-
-
 collideWithAllOthers :: GameObject -> [GameObject] -> CollisionEvents
 collideWithAllOthers    _             []              = [NoEvent]
 collideWithAllOthers    object        others          = [sumEvents [fst (collide object other) | other <- others]] ++ [snd (collide object other) | other <- others]
 
 sumEvents :: [Event CollisionCorrection] -> Event CollisionCorrection
-sumEvents    []                             = NoEvent
-sumEvents    (event:[])                     = event
-sumEvents    (NoEvent:events)               = sumEvents events
-sumEvents    ((Event collisionCorrection):events)
-    | sumEvents events == NoEvent           = Event collisionCorrection
-    | otherwise                             = Event (collisionCorrection ^+^ otherCorrection) where
-    (Event otherCorrection) = sumEvents events
+sumEvents                                   = foldl (^+^) NoEvent
 
 noEvents :: GameLevel -> CollisionEvents
 noEvents = map (const NoEvent) . objects
