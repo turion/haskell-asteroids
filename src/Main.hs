@@ -47,8 +47,12 @@ animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), inp
 
 
 collideAll :: GameLevel ->        CollisionEvents
-collideAll    (GameLevel (object:objects)) = collideWithAllOthers object objects
---collideAll    (GameLevel objects) = cleanFromDuplication $ parallelAdd [events | object <- objects, let events = collideWithAllOthers object objects]
+collideAll    (GameLevel [])      = []
+collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel objects)) where
+    collideWithRest :: [GameObject] -> CollisionEvents -> CollisionEvents
+    collideWithRest    []              collisionEvents    = collisionEvents
+    collideWithRest    (object:objects) events            = parallelAdd [collideWithAllOthers object objects, restEvents] where
+        restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
 
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CollisionEvents] -> CollisionEvents
@@ -72,11 +76,8 @@ sumEvents    (event:[])                     = event
 sumEvents    (NoEvent:events)               = sumEvents events
 sumEvents    ((Event collisionCorrection):events)
     | sumEvents events == NoEvent           = Event collisionCorrection
-    | otherwise                             = Event (sumTwoCollisionCorrections collisionCorrection otherCorrection) where
+    | otherwise                             = Event (collisionCorrection ^+^ otherCorrection) where
     (Event otherCorrection) = sumEvents events
-
-sumTwoCollisionCorrections :: CollisionCorrection -> CollisionCorrection -> CollisionCorrection
-sumTwoCollisionCorrections    cc1                    cc2                    = CollisionCorrection (deltaLocation cc1 ^+^ deltaLocation cc2) (deltaVelocity cc1 ^+^ deltaVelocity cc2)
 
 noEvents :: GameLevel -> CollisionEvents
 noEvents = map (const NoEvent) . objects
