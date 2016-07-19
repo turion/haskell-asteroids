@@ -79,16 +79,16 @@ instance VectorSpace CollisionCorrection GLfloat where
     CollisionCorrection loc1 vel1 ^+^ CollisionCorrection loc2 vel2  = CollisionCorrection (loc1 ^+^ loc2) (vel1 ^+^ vel2)
     CollisionCorrection loc1 vel1 `dot` CollisionCorrection loc2 vel2 = loc1 `dot` loc2 + vel1 `dot` vel2
 
---instance (VectorSpace v a) => VectorSpace (Event v) a where
---    zeroVector = NoEvent
---    a *^ NoEvent = NoEvent
---    a *^ Event v = Event $ a *^ v
---    NoEvent ^+^ NoEvent = NoEvent
---    NoEvent ^+^ Event v = Event v
---    Event v ^+^ NoEvent = Event v
---    Event v ^+^ Event w = Event $ v ^+^ w
---    NoEvent `dot` NoEvent = NoEvent
---    NoEvent `dot` Event v = NoEvent
---    Event v `dot` NoEvent = NoEvent
---    Event v `dot` Event w = Event $ v `dot` w
+instance (VectorSpace v a) => VectorSpace (Event v) a where
+    zeroVector = NoEvent
+    a *^ NoEvent = NoEvent
+    a *^ Event v = Event $ a *^ v
+    NoEvent ^+^ NoEvent = NoEvent
+    NoEvent ^+^ Event v = Event v
+    Event v ^+^ NoEvent = Event v
+    Event v ^+^ Event w = Event $ v ^+^ w
+    NoEvent `dot` NoEvent = 0
+    NoEvent `dot` Event v = 0
+    Event v `dot` NoEvent = 0
+    Event v `dot` Event w = v `dot` w
 
