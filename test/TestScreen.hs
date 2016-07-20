@@ -3,6 +3,8 @@ import Graphics
 import Datatypes
 import Generator
 import Control.Concurrent
+import Data.IORef
+import Data.Time.Clock
 
 main :: IO ()
 main = do
@@ -10,15 +12,18 @@ main = do
   _window <- createWindow "Haskelloids"
   fullScreen
   reshapeCallback $= Just reshape
-  showText "Haskelloids" (Vector (-3) 0) [0.5, 0.0, 0.5] 0.2 0
+  fonts <- initFonts
+  showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.2 fonts Title
   threadDelay 2000000
-  displayCallback $= display
+  t <- getCurrentTime
+  time <- newIORef t
+  displayCallback $= display time fonts
   mainLoop
 
-display :: DisplayCallback
-display = do
+display :: IORef UTCTime -> Fonts -> DisplayCallback
+display time fonts = do
   level <- generateLevel 10 30
   let start = GameState 1 3 0
   renderLevel level
-  showGameState start
+  showGameState start time fonts
   flush
