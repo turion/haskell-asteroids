@@ -4,6 +4,7 @@ module Graphics (
     renderLevel,
     showText,
     showGameState,
+    drawScreen,
     TextType(..),
     initFonts
   ) where
@@ -14,6 +15,7 @@ import Data.IORef
 import Data.Time.Clock
 
 import Datatypes
+import Generator
 
 
 -- Basic functions: initGL, reshape, drawPolygon --
@@ -84,9 +86,27 @@ drawGameObject      GameObject { location = location, orientation = orientation,
         rotate (orientation * 360 / (2 * pi)) $ Vector3 0 0 1       --degree or radians?
         drawGameObjectType gameObjectType
 
+drawScreen :: IORef GameLevel -> IORef UTCTime -> Fonts -> IORef Bool -> IO ()
+drawScreen gameLevel startTime fonts resetTriggered = do
+  clear[ColorBuffer]
+  ilevel <- readIORef gameLevel
+  resetNeeded <- readIORef resetTriggered
+  if resetNeeded == True
+  then do
+    writeIORef resetTriggered False
+    return ()
+  else do
+    return ()
+  newLevel <- generateLevel 5 10
+  let level | resetNeeded == False = ilevel
+            | resetNeeded == True = newLevel
+  writeIORef gameLevel level
+  let start = GameState 1 3 0
+  showGameState start startTime fonts
+  renderLevel level
+
 renderLevel :: GameLevel -> IO ()
 renderLevel (GameLevel objects) = preservingMatrix $ do
-     clear[ColorBuffer]
      mapM_ drawGameObject objects
      drawBorder
      swapBuffers
@@ -120,9 +140,9 @@ showText text (Vector x y) fontColors s fonts Regular = preservingMatrix $ do
   renderFont (fonts !! 1) text All
 
 showGameState :: GameState -> IORef UTCTime -> Fonts -> IO()
-showGameState (GameState {level = l, lifeCount = lc, score = s}) time fonts  = do
+showGameState (GameState {level = l, lifeCount = lc, score = s}) startTime fonts  = do
   now <- getCurrentTime
-  before <- readIORef time
+  before <- readIORef startTime
   let deltaTime = realToFrac $ diffUTCTime now before
   showText ("Lives: " ++ show lc ++ "   Level " ++ show l ++ "   Score: " ++ show s ++ "   Time: " ++ show deltaTime) (Vector (-0.65) (0.93)) [0.4, 0.8, 0.4] 0.06 fonts Regular
 

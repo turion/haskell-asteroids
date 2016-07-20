@@ -1,15 +1,22 @@
 module Generator (
-    generateLevel
+    generateLevel,
+    radius,
+    overlap
   ) where
 
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import Control.Monad
 import System.Random
-import Physics
 
 import Datatypes
-import Physics
+
+radius :: GameObjectType -> GLfloat
+radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
+radius Ship                 = 0.05
+radius EnemyShip            = 0.05
+radius Projectile           = 0.02
+radius EnemyProjectile      = 0.02
 
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
@@ -30,22 +37,25 @@ generateSeveralObjects enemies asteroids = do
 generateGameObject :: GameObjectType -> [GameObject] -> IO GameObject
 generateGameObject objType objects = do
   randomRadius <- ([1.0, 1.5, 2.0] !!) <$> randomRIO(0,2)
+  let velocityRange = 0.03
   x <- randomIO
   y <- randomIO
   o <- randomIO
+  v1 <- randomRIO (-velocityRange, velocityRange)
+  v2 <- randomRIO (-velocityRange, velocityRange)
   randomShape <- generateAsteroidShape
   let newObjectType | objType == EnemyShip = objType
                     | otherwise = Asteroid randomRadius randomShape
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) newObjectType
-  if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*360) newObjectType
+  if not (overlap newObject objects)
     then return newObject
     else generateGameObject newObjectType objects
 
-checkIfObjectOverlapsWithOtherObjects :: GameObject -> [GameObject] -> Bool
-checkIfObjectOverlapsWithOtherObjects o1 [] = False
-checkIfObjectOverlapsWithOtherObjects o1 (o2:os)
+overlap :: GameObject -> [GameObject] -> Bool
+overlap o1 [] = False
+overlap o1 (o2:os)
   | d < (r1 + r2) = True
-  | (length os) > 0 = checkIfObjectOverlapsWithOtherObjects o1 os
+  | (length os) > 0 = overlap o1 os
   | otherwise = False
   where
     r1 = radius $ gameObjectType o1
@@ -54,24 +64,24 @@ checkIfObjectOverlapsWithOtherObjects o1 (o2:os)
 
 generateAsteroidShape :: IO Shape
 generateAsteroidShape = do
-  y1 <- randomIO
-  x2 <- randomIO
-  x3 <- randomIO
-  x4 <- randomIO
-  y5 <- randomIO
-  x6 <- randomIO
-  x7 <- randomIO
-  x8 <- randomIO
-  --z8 <- randomRIO (b, 3*b)
   let
-    p1 = Vector 0                  (y1 * a + 2*a)
-    p2 = Vector (x2 * b + 2*b)       (x2 * b + 2*b)
-    p3 = Vector (x3 * a + 2*a)                  0
-    p4 = Vector (x4 * b + 2*b)    (-(x4 * b + 2*b))
-    p5 = Vector 0               (-(y5 * a + 2*a))
-    p6 = Vector (-(x6 * b + 2*b)) (-(x6 * b + 2*b))
-    p7 = Vector (-(x7 * a + 2*a))               0
-    p8 = Vector (-(x8 * b + 2*b))    (x8 * b + 2*b)
     a = 0.013
     b = 0.01
+  r1 <- randomRIO (2*a, 3*a)
+  r2 <- randomRIO (2*b, 3*b)
+  r3 <- randomRIO (2*a, 3*a)
+  r4 <- randomRIO (2*b, 3*b)
+  r5 <- randomRIO (2*a, 3*a)
+  r6 <- randomRIO (2*b, 3*b)
+  r7 <- randomRIO (2*a, 3*a)
+  r8 <- randomRIO (2*b, 3*b)
+  let
+    p1 = Vector 0 r1
+    p2 = Vector r2 r2
+    p3 = Vector r3 0
+    p4 = Vector r4 (-r4)
+    p5 = Vector 0 (-r5)
+    p6 = Vector (-r6) (-r6)
+    p7 = Vector (-r7) 0
+    p8 = Vector (-r8) r8
   return $ Shape [p1, p2, p3, p4, p5, p6, p7, p8]
