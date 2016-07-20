@@ -65,7 +65,7 @@ executable haskell-asteroids
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.8 && <4.9, time, Yampa, GLUT, random
+  build-depends:       base >=4.8 && <4.9, time, Yampa, GLUT, random, FTGL
   
   -- Directories containing source files.
   hs-source-dirs:      src
