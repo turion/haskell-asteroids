@@ -66,7 +66,6 @@ game iLevel = proc (input) -> do
         level  <- animateManyObjects iLevel -< (events, input)
     returnA -< level
 
-
 -- Main
 
 main :: IO ()
@@ -80,8 +79,6 @@ main    = do
     fullScreen
     reshapeCallback $= Just reshape
     fonts <- initFonts
---    showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.2 fonts Title
---    threadDelay 2000000
     level <- generateLevel 5 10
     pauseTriggered <- newIORef False
     resetTriggered <- newIORef False

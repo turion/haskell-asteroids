@@ -24,10 +24,9 @@ data UserInput = NoInput | UserInput {
 }
 
 data OtherButtons = OtherButtons {
-  pause :: IORef Bool,
-  reset :: IORef Bool
+  pause :: Bool,
+  reset :: Bool
 }
-
 
 handleInput :: Window -> IORef Bool -> IORef Bool -> IORef UserInput -> Event KeyboardInput -> IO ()
 handleInput    window    _  _   _           (Event (KeyboardInput (Char 'q') (Down) _))  = destroyWindow window
