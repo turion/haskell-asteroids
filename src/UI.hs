@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows #-}
 module UI (
     KeyboardInput(..),
-    GameInput(..),
+    UserInput(..),
     handleInput
 ) where
 
@@ -18,27 +18,27 @@ data KeyboardInput = KeyboardInput {
     modifiers :: Modifiers
 }
 
-data GameInput = GameInput {
+data UserInput = NoInput | UserInput {
     acceleration :: Acceleration,
     turn         :: Orientation
 }
 
 
-handleInput :: Window -> IORef GameInput -> Event KeyboardInput -> IO ()
+handleInput :: Window -> IORef UserInput -> Event KeyboardInput -> IO ()
 handleInput    window    _               (Event (KeyboardInput (Char 'q') (Down) _)) = destroyWindow window
 handleInput    _         gameInput       userInput       = do
     oldInput <- readIORef gameInput
-    writeIORef gameInput $ GameInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
+    writeIORef gameInput $ UserInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
     return ()
 
-parseAcceleration :: GameInput -> Event KeyboardInput ->                                    Acceleration
+parseAcceleration :: UserInput -> Event KeyboardInput ->                                    Acceleration
 parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyUp)    (Down) _)) =  1.0
 parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyDown)  (Down) _)) =  (-1.0)
 parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyUp)    (Up)   _)) =  0.0
 parseAcceleration    _            (Event (KeyboardInput (SpecialKey KeyDown)  (Up)   _)) =  0.0
 parseAcceleration    oldInput     _                                                 =  acceleration oldInput
 
-parseOrientation :: GameInput -> Event KeyboardInput ->                                    Orientation
+parseOrientation :: UserInput -> Event KeyboardInput ->                                    Orientation
 parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyRight) (Down) _)) =  (-1.0)
 parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyLeft)  (Down) _)) =  1.0
 parseOrientation    _            (Event (KeyboardInput (SpecialKey KeyRight) (Up)   _)) =  0.0

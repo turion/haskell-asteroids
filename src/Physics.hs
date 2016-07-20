@@ -1,18 +1,15 @@
 module Physics (
-    CollisionCorrection(..),
     radius,
     collide
   ) where
 
 import Datatypes
+import UI
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import FRP.Yampa.Event
 
-data CollisionCorrection = CollisionCorrection {
-  deltaLocation :: Location,
-  deltaVelocity :: Velocity
-}
+-- Collisions
 
 radius :: GameObjectType -> GLfloat
 radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
@@ -31,23 +28,13 @@ overlap    object        other
         r1 = radius $ gameObjectType object
         r2 = radius $ gameObjectType other
 
---getOverlappingObjects :: GameObject -> [GameObject] -> Maybe [GameObject]
---getOverlappingObjects object [] = Nothing
---getOverlappingObjects object (other:others) 
---    | overlap object other = Just $ other : (getOverlappingObjects object others)
---    | otherwise            = getOverlappingObjects object others
-
-
-
--- TODO? move objects back in old direction according to the "time" they've been overlapping
--- and instead in the new direction according to that same time and the new velocities
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
     | overlap object other = (Event objectCollisionCorrection , Event otherCollisionCorrection)
     | otherwise            = (NoEvent, NoEvent) where
         -- calculate collision normal
         difference = location object ^-^ location other
-        collisionNormal = (1 / norm difference) *^ difference
+        collisionNormal = FRP.Yampa.VectorSpace.normalize difference
 
         -- calculate parts of v1 that collide and the remainder
         v1 = velocity object
@@ -72,9 +59,77 @@ collide object other
         -- calculate the location correction
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
-        correction = distance - radiusSum
-        deltaL1 = (-0.01 + correction) *^ v1
-        deltaL2 = (-0.01 + correction) *^ v2
+        correction = radiusSum - distance
+        deltaL1 = ( correction * 4) *^ collisionNormal
+        deltaL2 = (-correction * 4) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2 
+
+
+-- Alternate Approach following the Yampa Arcade Paper: 
+
+--  Game
+
+--data ObjectInput = ObjectInput{
+--    iHit :: Event (),
+--    iUserInput :: UserInput,
+--    iCollisionCorrection :: CollisionCorrection
+--}
+
+--data ObjectOutput = ObjectOutput{
+--    gameObject :: GameObject,
+--    killEvent :: Event (),
+--    spawnEvent :: Event [GameObject]
+--}
+
+--type Object = SF ObjectInput ObjectOutput
+
+--object :: GameObject ->               Object
+--object (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (ObjectInput hit userInput, collisionCorrection) -> do
+--    orientation <- (iOrientation+) ^<< integral -< turn userInput
+--    let acc = acceleration userInput *^ Vector (-sin orientation) (cos orientation)
+--    velocity    <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collision_correction)
+--    location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collision_correction)
+--    die         <- edge                                -< hit
+--    returnA -<
+--        -- depending on the object type, return different values
+--        ObjectOutput {
+--            gameObject = GameObject location velocity orientation gameObjectType,
+--            killEvent = die,
+--            spawnEvent =
+--                fire ‘tag‘
+--                [GameObject location (2 *^ velocity) orientation Projectile]
+--        }
+
+--gameCore :: IL Object -> SF (UserInput, IL ObjectOutput) (IL ObjectOutput)
+--gameCore objs =
+--    dpSwitch route
+--    objs
+--    (arr killOrSpawn >>> notYet)
+--    (\sfs’ f -> gameCore (f sfs’))
+
+--route :: (UserInput, IL ObjOutput) -> IL sf -> IL (ObjInput, sf)
+--route    (userInput, outputs)         objectss     = mapIL routeAux objects where
+--    routeAux (id, object) =
+--        (ObjectInput {
+--            iHit =  if id ‘elem‘ hits
+--                    then Event ()
+--                    else noEvent,
+--            iUserInput = userInput,
+--            iCollisionCorrection = ?
+--        }, object)
+--    hits = collisions (assocsIL (fmap gameObject outputs))
+
+
+---- todo
+--killOrSpawn :: (a, IL ObjectOutput) -> (Event (IL Object->IL Object))
+--killOrSpawn    (_, outputs) = foldl (mergeBy (.)) noEvent es where
+--    es :: [Event (IL Object -> IL Object)]
+--    es = [ mergeBy (.)
+--            (killEvent oo
+--            ‘tag‘ (deleteIL k))
+--            (fmap (foldl (.) id
+--            . map insertIL_)
+--            (spawnEvent oo))
+--         | (k,oo) <- assocsIL outputs ]
