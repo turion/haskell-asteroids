@@ -45,6 +45,7 @@ collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel
     collideWithRest    (object:objects) events             = parallelAdd [collideWithAllOthers object objects, restEvents] where
         restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
 
+
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CollisionEvents] -> CollisionEvents
 parallelAdd                         = map sumEvents . transpose
@@ -92,6 +93,10 @@ main    = do
     writeIORef time t'
     mainLoop
 
+
+idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()
+idle    userInput          time             handle                             = do
+    input <- readIORef userInput
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()
 idle    userInput          time             handle                             = do
     input <- readIORef userInput
@@ -102,65 +107,8 @@ idle    userInput          time             handle                             =
     writeIORef time now
     postRedisplay Nothing
 
-actuator :: IORef Bool -> IORef GameLevel -> ReactHandle UserInput GameLevel -> Bool -> GameLevel -> IO Bool
-actuator    pauseTriggered output             _                                  _       gameLevel    = do
-    pauseNeeded <- readIORef pauseTriggered
-    let level | pauseNeeded == False = gameLevel
-              | pauseNeeded == True = GameLevel [GameObject (Vector 10.0 0.0) (Vector 0.0 0.0) 0.0 Ship]
-    writeIORef output level
+
+actuator :: IORef GameLevel -> ReactHandle UserInput GameLevel -> Bool -> GameLevel -> IO Bool
+actuator    output             _                                  _       gameLevel    = do
+    writeIORef output gameLevel
     return False
-
---initialGameState :: GameLevel
---initialGameState = GameLevel [initialShip, initialAsteroid, otherAsteroid, thirdAsteroid]
-
---initialShip :: GameObject
---initialShip = GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship
---
---initialEnemies :: [GameObject]
---initialEnemies = []
---
---initialAsteroid :: GameObject
---initialAsteroid = GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0 shape) where
---    shape = Shape [  (Vector   0.000    0.050 ),
---                     (Vector   0.040    0.030 ),
---                     (Vector   0.030    0.040 ),
---                     (Vector   0.050    0.000 ),
---                     (Vector   0.030  (-0.040)),
---                     (Vector   0.040  (-0.030)),
---                     (Vector   0.000  (-0.050)),
---                     (Vector (-0.040) (-0.030)),
---                     (Vector (-0.030) (-0.040)),
---                     (Vector (-0.050)   0.000 ),
---                     (Vector (-0.050)   0.000 ),
---                     (Vector (-0.040)   0.030 )]
---
---otherAsteroid :: GameObject
---otherAsteroid = GameObject (Vector (-0.5) (-0.5)) (Vector 0.0 0.1) 0.0 (Asteroid 1.0 shape) where
---    shape = Shape [  (Vector   0.000    0.050 ),
---                     (Vector   0.040    0.030 ),
---                     (Vector   0.030    0.040 ),
---                     (Vector   0.050    0.000 ),
---                     (Vector   0.030  (-0.040)),
---                     (Vector   0.040  (-0.030)),
---                     (Vector   0.000  (-0.050)),
---                     (Vector (-0.040) (-0.030)),
---                     (Vector (-0.030) (-0.040)),
---                     (Vector (-0.050)   0.000 ),
---                     (Vector (-0.050)   0.000 ),
---                     (Vector (-0.040)   0.030 )]
---
---thirdAsteroid :: GameObject
---thirdAsteroid = GameObject (Vector 0.5 (-0.5)) (Vector 0.0 0.1) 0.0 (Asteroid 1.0 shape) where
---    shape = Shape [  (Vector   0.000    0.050 ),
---                     (Vector   0.040    0.030 ),
---                     (Vector   0.030    0.040 ),
---                     (Vector   0.050    0.000 ),
---                     (Vector   0.030  (-0.040)),
---                     (Vector   0.040  (-0.030)),
---                     (Vector   0.000  (-0.050)),
---                     (Vector (-0.040) (-0.030)),
---                     (Vector (-0.030) (-0.040)),
---                     (Vector (-0.050)   0.000 ),
---                     (Vector (-0.050)   0.000 ),
---                     (Vector (-0.040)   0.030 )]
-

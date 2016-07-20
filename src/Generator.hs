@@ -10,13 +10,7 @@ import Control.Monad
 import System.Random
 
 import Datatypes
-
-radius :: GameObjectType -> GLfloat
-radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
-radius Ship                 = 0.05
-radius EnemyShip            = 0.05
-radius Projectile           = 0.02
-radius EnemyProjectile      = 0.02
+import Physics
 
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do

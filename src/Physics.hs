@@ -1,4 +1,5 @@
 module Physics (
+    radius,
     collide
   ) where
 
@@ -10,6 +11,23 @@ import FRP.Yampa.Event
 import Generator
 
 -- Collisions
+
+radius :: GameObjectType -> GLfloat
+radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
+radius Ship                 = 0.05
+radius EnemyShip            = 0.05
+radius Projectile           = 0.02
+radius EnemyProjectile      = 0.02
+
+overlap :: GameObject -> GameObject -> Bool
+overlap    object        other
+    | object == other = False
+    | otherwise       = distance <= (r1 + r2) where
+        distance = norm $ loc1 ^-^ loc2
+        loc1 = location object
+        loc2 = location other
+        r1 = radius $ gameObjectType object
+        r2 = radius $ gameObjectType other
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
