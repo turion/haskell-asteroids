@@ -50,7 +50,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules: Datatypes, Graphics, Generator
-  build-depends: base >=4.8 && <4.9, time, Yampa, OpenGL, GLUT, random, FTGL
+  build-depends: base >=4.8 && <4.9, time, FTGL, Yampa == 0.10.4, OpenGL == 2.13.1.0, GLUT == 2.7.0.3, random
   hs-source-dirs: src
   default-language: Haskell2010
 
@@ -65,7 +65,7 @@ executable haskell-asteroids
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.8 && <4.9, time, Yampa, GLUT, random, FTGL
+  build-depends:       base >=4.8 && <4.9, time, FTGL, Yampa == 0.10.4, OpenGL == 2.13.1.0, GLUT == 2.7.0.3, random
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -75,6 +75,6 @@ executable haskell-asteroids
 
 executable test-screen
   main-is: TestScreen.hs
-  build-depends:       base >=4.8 && <4.9, time, Yampa, GLUT, haskell-asteroids, random, FTGL, OpenGL
+  build-depends:       base >=4.8 && <4.9, time, FTGL, Yampa == 0.10.4, OpenGL == 2.13.1.0, GLUT == 2.7.0.3, haskell-asteroids, random
   hs-source-dirs:      test
   default-language:    Haskell2010

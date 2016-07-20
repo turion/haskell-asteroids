@@ -35,6 +35,7 @@ drawPolygon    (r, g, b)                      points = do
                 vertex $ (Vertex3   x    y  0)
                 drawPoints others
 
+
 -- Game functions: drawGameObjectType, drawGameObject, drawListOfGameObjects, drawGameLevel --
 
 drawGameObjectType :: GameObjectType -> IO ()
