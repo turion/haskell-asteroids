@@ -1,6 +1,8 @@
 module Physics (
     radius,
-    collide
+    collide,
+    overlap,
+    torusfy
   ) where
 
 import Datatypes
@@ -64,7 +66,16 @@ collide object other
         deltaL2 = (-correction * 4) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
-        otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2 
+        otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
+
+torusfy :: Location -> Location
+torusfy    (Vector x y)
+    | x < -1.1 = torusfy (Vector (x + 2.2) y)
+    | x >  1.1 = torusfy (Vector (x - 2.2) y)
+    | y < -1.1 = torusfy (Vector x (y + 2.2))
+    | y >  1.1 = torusfy (Vector x (y - 2.2))
+    | otherwise = Vector x y
+
 
 
 -- Alternate Approach following the Yampa Arcade Paper: 

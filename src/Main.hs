@@ -20,11 +20,12 @@ import Physics
 animateGameObject :: GameObject ->                                             SF (Event CollisionCorrection, UserInput) GameObject
 animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (collisionCorrection, userInput) -> do
     let input = if gameObjectType == Ship then userInput else  UserInput 0.0 0.0
-    orientation <- (iOrientation+) ^<< integral -< turn input
+    orientation      <- (iOrientation+) ^<< integral -< turn input
     let acc = acceleration input *^ Vector (-sin orientation) (cos orientation)
-    velocity    <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
-    location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
-    returnA     -< GameObject location velocity orientation gameObjectType
+    velocity         <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
+    preTorusLocation <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
+    let location = torusfy preTorusLocation
+    returnA          -< GameObject location velocity orientation gameObjectType
 
 --lists are not necessarily of same size --> use length of list (maybe)
 type CollisionEvents = [Event CollisionCorrection]
