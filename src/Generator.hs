@@ -1,7 +1,5 @@
 module Generator (
-    generateLevel,
-    radius,
-    overlap
+    generateLevel
   ) where
 
 import Graphics.UI.GLUT
@@ -44,17 +42,6 @@ generateGameObject objType objects = do
   if not (overlap newObject objects)
     then return newObject
     else generateGameObject newObjectType objects
-
-overlap :: GameObject -> [GameObject] -> Bool
-overlap o1 [] = False
-overlap o1 (o2:os)
-  | d < (r1 + r2) = True
-  | (length os) > 0 = overlap o1 os
-  | otherwise = False
-  where
-    r1 = radius $ gameObjectType o1
-    r2 = radius $ gameObjectType o2
-    d = norm $ location o1 ^-^ location o2
 
 generateAsteroidShape :: IO Shape
 generateAsteroidShape = do

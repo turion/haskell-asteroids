@@ -83,7 +83,7 @@ main    = do
     level <- generateLevel 5 10
     pauseTriggered <- newIORef False
     resetTriggered <- newIORef False
-    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator pauseTriggered output) $ game level
+    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window pauseTriggered resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
     --levelToRender <- readIORef output
@@ -93,10 +93,6 @@ main    = do
     writeIORef time t'
     mainLoop
 
-
-idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()
-idle    userInput          time             handle                             = do
-    input <- readIORef userInput
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()
 idle    userInput          time             handle                             = do
     input <- readIORef userInput
