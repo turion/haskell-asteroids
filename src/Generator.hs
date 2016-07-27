@@ -39,7 +39,7 @@ generateGameObject objType objects = do
   let newObjectType | objType == EnemyShip = objType
                     | otherwise = Asteroid randomRadius randomShape
   let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*360) newObjectType
-  if not (overlap newObject objects)
+  if not (overlapAny newObject objects)
     then return newObject
     else generateGameObject newObjectType objects
 
