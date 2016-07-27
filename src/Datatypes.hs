@@ -9,14 +9,13 @@ module Datatypes (
   GameObject(..),
   GameState(..),
   Shape(..),
-  Fonts,
+  Fonts(..),
   Location,
   Velocity,
   Acceleration,
   Orientation,
   Scale,
   Rotation,
-  mod2Pi,
   CollisionCorrection(..)
   ) where
 
@@ -37,6 +36,7 @@ instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
   a *^ Vector x y = Vector (a*x) (a*y)
   Vector x1 y1 ^+^ Vector x2 y2  = Vector (x1+x2) (y1+y2)
+  Vector x1 y1 ^-^ Vector x2 y2  = Vector (x1-x2) (y1-y2)
   Vector x1 y1 `dot` Vector x2 y2 = x1*x2 + y1*y2
 
 data Shape = Shape {
@@ -54,6 +54,7 @@ instance VectorSpace Orientation GLfloat where
   zeroVector = 0
   (*^) = (*)
   (^+^) = (+)
+  (^-^) = (-)
   dot = (*)
 
 -- Game types: GameObjectType, GameObject, GameLevel --
@@ -78,7 +79,10 @@ data GameState = GameState {
   score :: Integer
 }
 
-type Fonts = [Graphics.Rendering.FTGL.Font]
+data Fonts = Fonts {
+ title :: Graphics.Rendering.FTGL.Font,
+ regular :: Graphics.Rendering.FTGL.Font
+ }
 
 data CollisionCorrection = CollisionCorrection {
   deltaLocation :: Location,
@@ -103,10 +107,10 @@ instance (VectorSpace v a) => VectorSpace (Event v) a where
     NoEvent `dot` Event v = 0
     Event v `dot` NoEvent = 0
     Event v `dot` Event w = v `dot` w
-
+{-
 mod2Pi :: GLfloat -> GLfloat
 mod2Pi a | a > 0 && a > 2 * pi = mod2Pi $ a - 2 * pi
          | a < 0 && a < 2 * pi = mod2Pi $ a + 2 * pi
          | a < 0 = a + 2 * pi
-         | otherwise = a
+         | otherwise = a-}
 

@@ -42,9 +42,9 @@ doObjectsMeet (GameObject {location = Vector x1 y1, velocity = Vector vx1 vy1, o
 {-doObjectsCollide :: GameObject -> GameObject -> Bool
 doObjectsCollide object1 object2 = t >= 0 && radius (gameObjectType object1) + radius (gameObjectType object2) <= d where
   t = closest (location object1) (velocity object1) (location object2) (velocity object2)
-  d = norm $ (location object1) - (location object2) + t *((velocity object1) - (velocity object2))-}
+  d = norm $ ((location object1) - (location object2)) + t *^((velocity object1) - (velocity object2))
 
-{-closest :: Location -> Velocity -> Location -> Velocity -> GLfloat
+closest :: Location -> Velocity -> Location -> Velocity -> GLfloat
 closest l1 v1 l2 v2 =  ((v1 - v2) `dot` (l1 - l2)) / ((v1 - v2) `dot` (v1 - v2))-}
 
 aim :: GameObject -> GameObject -> UserInput

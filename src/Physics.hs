@@ -52,10 +52,10 @@ collide object other
         v2Remaining = v2 ^-^ v2Colliding
 
         -- calculate results of the actually colliding parts via an inelastic collision
-        v1PostCollision = v2Colliding ^-^ v1Colliding
-        --v1PostCollision = v2Colliding ^-^ v1
-        v2PostCollision = v1Colliding ^-^ v2Colliding
-        --v2PostCollision = v1Colliding ^-^ v2
+        --v1PostCollision = v2Colliding ^-^ v1Colliding
+        v1PostCollision = v2Colliding ^-^ v1
+        --v2PostCollision = v1Colliding ^-^ v2Colliding
+        v2PostCollision = v1Colliding ^-^ v2
 
         -- add the remaining velocities not involved in the collision
         deltaV1 = v1PostCollision ^+^ v1Remaining
@@ -65,8 +65,8 @@ collide object other
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = radiusSum - distance
-        deltaL1 =    (correction * 4) *^ collisionNormal
-        deltaL2 = (-correction * 4) *^ collisionNormal
+        deltaL1 =    (correction ) *^ collisionNormal
+        deltaL2 = (-correction ) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2

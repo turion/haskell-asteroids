@@ -68,9 +68,24 @@ sumEvents                                   = foldl (^+^) NoEvent
 noEvents :: GameLevel -> CollisionEvents
 noEvents = map (const NoEvent) . objects
 
+resettedLevel :: GameLevel -> IORef Bool -> IO GameLevel
+resettedLevel iLevel resetTriggered = do
+    resetNeeded <- readIORef resetTriggered
+    newLevel <- generateLevel 5 10
+    let level | resetNeeded == True = newLevel
+              | otherwise = iLevel
+    if resetNeeded == True then do
+      writeIORef resetTriggered False
+      return ()
+    else return ()
+    return level
+
+
+
 game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
     rec
+        -- iLevel <- ioLevel
         events <- iPre (noEvents iLevel)    -< collideAll level
         level  <- animateManyObjects iLevel -< (events, input)
     returnA -< level
@@ -79,24 +94,25 @@ game iLevel = proc (input) -> do
 
 main :: IO ()
 main    = do
+    window <- initGL
     input <- newIORef (UserInput 0.0 0.0)
     output <- newIORef (EmptyLevel)
-    t <- getCurrentTime
-    time <- newIORef t
-    startTime <- newIORef t
-    window <- initGL
     fullScreen
     reshapeCallback $= Just reshape
     fonts <- initFonts
+    showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.2 fonts Title
+    threadDelay 2000000
+    t <- getCurrentTime
+    time <- newIORef t
+    startTime <- newIORef t
     level <- generateLevel 5 10
-    pauseTriggered <- newIORef False
     resetTriggered <- newIORef False
-    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window pauseTriggered resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
+    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level --  $ resettedLevel level resetTriggered
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
     --levelToRender <- readIORef output
     --displayCallback $= (readIORef output >>= renderLevel)
-    displayCallback $= (drawScreen output startTime fonts resetTriggered)
+    displayCallback $= (drawScreen output startTime fonts)
     t' <- getCurrentTime
     writeIORef time t'
     mainLoop
