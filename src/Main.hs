@@ -38,13 +38,6 @@ animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), inp
     object              <- animateGameObject iObject       -< (event, input, lastLevel)
     (GameLevel objects) <- animateManyObjects (GameLevel (iObjects)) -< (events, input, lastLevel)
     returnA             -< GameLevel (object:objects)
-{-animateManyObjects    (GameLevel [player])           = proc ((event:events), input) -> do
-    object              <- animateGameObject player player               -< (event, input)
-    returnA             -< GameLevel [object]-}
-{-animateManyObjects    (GameLevel (player:iObject:iObjects)) = proc ((event:events), input) -> do
-    object              <- animateGameObject iObject player               -< (event, input)
-    (GameLevel objects) <- animateManyObjects (GameLevel (player:iObjects)) -< (events, input)
-    returnA             -< GameLevel (object:objects)-}
 
 collideAll :: GameLevel ->        CollisionEvents
 collideAll    (GameLevel [])      = []
@@ -67,18 +60,6 @@ sumEvents                                   = foldl (^+^) NoEvent
 
 noEvents :: GameLevel -> CollisionEvents
 noEvents = map (const NoEvent) . objects
-
-{-resettedLevel :: GameLevel -> IORef Bool -> IO GameLevel
-resettedLevel iLevel resetTriggered = do
-    resetNeeded <- readIORef resetTriggered
-    newLevel <- generateLevel 5 10
-    let level | resetNeeded == True = newLevel
-              | otherwise = iLevel
-    if resetNeeded == True then do
-      writeIORef resetTriggered False
-      return ()
-    else return ()
-    return level-}
 
 game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
@@ -106,11 +87,9 @@ main    = do
     startTime <- newIORef t
     level <- generateLevel 10 20
     resetTriggered <- newIORef False
-    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level --  $ resettedLevel level resetTriggered
+    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    --levelToRender <- readIORef output
-    --displayCallback $= (readIORef output >>= renderLevel)
     displayCallback $= (drawScreen output startTime fonts)
     mainLoop
 

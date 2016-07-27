@@ -23,7 +23,6 @@ rotateClockwiseToAim x1 y1 x2 y2 angle | x1 == x2 && y1 == y2 = True
                       | otherwise = True
     where
       phi = calculateAngle x1 y1 x2 y2
---doObjectsMeet (GameObject (Vector 0.5 0.5) (Vector 0.2 0.1) 135.0 1.0 EnemyShip) (GameObject (Vector (-0.8) 0.4) (Vector 0.1 0.1) 160.0 0.5 Asteroid)
 
 doObjectsMeet :: GameObject -> GameObject -> Bool
 doObjectsMeet (GameObject {location = Vector x1 y1, velocity = Vector vx1 vy1, orientation = o1, gameObjectType = objType1}) (GameObject {location = Vector x2 y2, velocity = Vector vx2 vy2, orientation = o2, gameObjectType = objType2})
@@ -38,14 +37,6 @@ doObjectsMeet (GameObject {location = Vector x1 y1, velocity = Vector vx1 vy1, o
       dy = y2 - y1
       dvx = vx2 - vx1
       dvy = vy2 - vy1
-
-{-doObjectsCollide :: GameObject -> GameObject -> Bool
-doObjectsCollide object1 object2 = t >= 0 && radius (gameObjectType object1) + radius (gameObjectType object2) <= d where
-  t = closest (location object1) (velocity object1) (location object2) (velocity object2)
-  d = norm $ ((location object1) - (location object2)) + t *^((velocity object1) - (velocity object2))
-
-closest :: Location -> Velocity -> Location -> Velocity -> GLfloat
-closest l1 v1 l2 v2 =  ((v1 - v2) `dot` (l1 - l2)) / ((v1 - v2) `dot` (v1 - v2))-}
 
 aim :: ID -> GameLevel -> UserInput
 aim enemyShipId level | rotateClockwiseToAim x1 y1 x2 y2 phi == True = UserInput 0.0 (-0.7)

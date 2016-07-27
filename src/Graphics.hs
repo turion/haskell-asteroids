@@ -83,8 +83,7 @@ drawGameObjectType EnemyProjectile = do
 drawGameObject ::   GameObject ->   IO ()
 drawGameObject      GameObject { location = location, orientation = orientation, gameObjectType = gameObjectType}     = do
     preservingMatrix $ do
-       -- print $ (mod' (orientation) pi)-- + pi / 2
-        --print $ mod2Pi $ orientation + pi / 2
+
         translate $ Vector3 (x location) (y location) 0
         rotate (orientation * 360 / (2 * pi)) $ Vector3 0 0 1       --degree or radians?
         drawGameObjectType gameObjectType
@@ -93,20 +92,9 @@ drawScreen :: IORef GameLevel -> IORef UTCTime -> Fonts -> IO ()
 drawScreen gameLevel startTime fonts = do
   clear[ColorBuffer]
   ilevel <- readIORef gameLevel
-  {-if resetNeeded == True
-  then do
-    writeIORef resetTriggered False
-    return ()
-  else do
-    return ()
-  newLevel <- generateLevel 5 10
-  let level | resetNeeded == False = ilevel
-            | resetNeeded == True = newLevel
-  writeIORef gameLevel level-}
   let start = GameState 1 3 0
   showGameState start startTime fonts
   renderLevel ilevel
-  --renderLevel level
 
 renderLevel :: GameLevel -> IO ()
 renderLevel (GameLevel objects) = preservingMatrix $ do
