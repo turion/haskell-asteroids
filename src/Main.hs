@@ -13,29 +13,30 @@ import Control.Concurrent
 -- Haskelloids
 import Datatypes
 import UI
+import AI
 import Graphics
 import Physics
 import Generator
 
 -- iX stands for the initial value of X
-animateGameObject :: GameObject ->                                             SF (Event CollisionCorrection, UserInput) GameObject
-animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (collisionCorrection, userInput) -> do
-    let input = if gameObjectType == Ship then userInput else  UserInput 0.0 0.0
+animateGameObject :: GameObject ->                             SF (Event CollisionCorrection, UserInput, GameLevel) GameObject
+animateGameObject iObject@(GameObject iLocation iVelocity iOrientation id gameObjectType) = proc (collisionCorrection, userInput, lastLevel) -> do
+    let input = if gameObjectType == Ship then userInput else if gameObjectType == EnemyShip then aim id lastLevel else rotateAsteroid gameObjectType
     orientation      <- (iOrientation+) ^<< integral -< turn input
     let acc = acceleration input *^ Vector (-sin orientation) (cos orientation)
     velocity         <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
     preTorusLocation <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
     let location = torusfy preTorusLocation
-    returnA          -< GameObject location velocity orientation gameObjectType
+    returnA          -< GameObject location velocity orientation id gameObjectType
 
 --lists are not necessarily of same size --> use length of list (maybe)
 type CollisionEvents = [Event CollisionCorrection]
 
-animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput) GameLevel
+animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput, GameLevel) GameLevel
 animateManyObjects    (GameLevel [])                 = arr $ const $ GameLevel []
-animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input) -> do
-    object              <- animateGameObject iObject               -< (event, input)
-    (GameLevel objects) <- animateManyObjects (GameLevel iObjects) -< (events, input)
+animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input, lastLevel) -> do
+    object              <- animateGameObject iObject       -< (event, input, lastLevel)
+    (GameLevel objects) <- animateManyObjects (GameLevel (iObjects)) -< (events, input, lastLevel)
     returnA             -< GameLevel (object:objects)
 
 collideAll :: GameLevel ->        CollisionEvents
@@ -45,7 +46,6 @@ collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel
     collideWithRest    []               collisionEvents    = collisionEvents
     collideWithRest    (object:objects) events             = parallelAdd [collideWithAllOthers object objects, restEvents] where
         restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
-
 
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CollisionEvents] -> CollisionEvents
@@ -64,34 +64,33 @@ noEvents = map (const NoEvent) . objects
 game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
     rec
+        -- iLevel <- ioLevel
         events <- iPre (noEvents iLevel)    -< collideAll level
-        level  <- animateManyObjects iLevel -< (events, input)
+        level  <- animateManyObjects iLevel -< (events, input, lastLevel)
+        lastLevel <- iPre (iLevel) -< level
     returnA -< level
 
 -- Main
 
 main :: IO ()
 main    = do
+    window <- initGL
     input <- newIORef (UserInput 0.0 0.0)
     output <- newIORef (EmptyLevel)
-    t <- getCurrentTime
-    time <- newIORef t
-    startTime <- newIORef t
-    window <- initGL
     fullScreen
     reshapeCallback $= Just reshape
     fonts <- initFonts
-    level <- generateLevel 5 10
-    pauseTriggered <- newIORef False
+    showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.2 fonts Title
+    threadDelay 2000000
+    t <- getCurrentTime
+    time <- newIORef t
+    startTime <- newIORef t
+    level <- generateLevel 10 20
     resetTriggered <- newIORef False
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window pauseTriggered resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    --levelToRender <- readIORef output
-    --displayCallback $= (readIORef output >>= renderLevel)
-    displayCallback $= (drawScreen output startTime fonts resetTriggered)
-    t' <- getCurrentTime
-    writeIORef time t'
+    displayCallback $= (drawScreen output startTime fonts)
     mainLoop
 
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()

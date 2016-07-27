@@ -9,12 +9,14 @@ module Datatypes (
   GameObject(..),
   GameState(..),
   Shape(..),
-  Fonts,
+  Fonts(..),
   Location,
   Velocity,
   Acceleration,
   Orientation,
   Scale,
+  Rotation,
+  ID,
   CollisionCorrection(..)
   ) where
 
@@ -35,6 +37,7 @@ instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
   a *^ Vector x y = Vector (a*x) (a*y)
   Vector x1 y1 ^+^ Vector x2 y2  = Vector (x1+x2) (y1+y2)
+  Vector x1 y1 ^-^ Vector x2 y2  = Vector (x1-x2) (y1-y2)
   Vector x1 y1 `dot` Vector x2 y2 = x1*x2 + y1*y2
 
 data Shape = Shape {
@@ -46,22 +49,26 @@ type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
 type Scale = GLfloat
+type Rotation = GLfloat
+type ID = Int
 
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
   (*^) = (*)
   (^+^) = (+)
+  (^-^) = (-)
   dot = (*)
 
 -- Game types: GameObjectType, GameObject, GameLevel --
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
+data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape Rotation | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
   location :: Location,
   velocity :: Velocity,
   orientation :: Orientation,
+  objectId :: ID,
   gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 
@@ -75,7 +82,10 @@ data GameState = GameState {
   score :: Integer
 }
 
-type Fonts = [Graphics.Rendering.FTGL.Font]
+data Fonts = Fonts {
+ title :: Graphics.Rendering.FTGL.Font,
+ regular :: Graphics.Rendering.FTGL.Font
+ }
 
 data CollisionCorrection = CollisionCorrection {
   deltaLocation :: Location,

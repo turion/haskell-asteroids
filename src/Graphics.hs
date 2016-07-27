@@ -13,6 +13,7 @@ import Graphics.UI.GLUT
 import Graphics.Rendering.FTGL
 import Data.IORef
 import Data.Time.Clock
+import Data.Fixed
 
 import Datatypes
 import Generator
@@ -65,7 +66,7 @@ drawGameObjectType EnemyShip = do
                                  ( 0.050, -0.050),
                                  ( 0.000, -0.025),
                                  (-0.050, -0.050)]
-drawGameObjectType (Asteroid s (Shape shape))= do
+drawGameObjectType (Asteroid s (Shape shape) _)= do
     scale s s s
     drawPolygon (0.4, 0.4, 0.4) [(x vector, y vector) | vector <- shape]
 drawGameObjectType Projectile = do
@@ -82,28 +83,18 @@ drawGameObjectType EnemyProjectile = do
 drawGameObject ::   GameObject ->   IO ()
 drawGameObject      GameObject { location = location, orientation = orientation, gameObjectType = gameObjectType}     = do
     preservingMatrix $ do
+
         translate $ Vector3 (x location) (y location) 0
         rotate (orientation * 360 / (2 * pi)) $ Vector3 0 0 1       --degree or radians?
         drawGameObjectType gameObjectType
 
-drawScreen :: IORef GameLevel -> IORef UTCTime -> Fonts -> IORef Bool -> IO ()
-drawScreen gameLevel startTime fonts resetTriggered = do
+drawScreen :: IORef GameLevel -> IORef UTCTime -> Fonts -> IO ()
+drawScreen gameLevel startTime fonts = do
   clear[ColorBuffer]
   ilevel <- readIORef gameLevel
-  resetNeeded <- readIORef resetTriggered
-  if resetNeeded == True
-  then do
-    writeIORef resetTriggered False
-    return ()
-  else do
-    return ()
-  newLevel <- generateLevel 5 10
-  let level | resetNeeded == False = ilevel
-            | resetNeeded == True = newLevel
-  writeIORef gameLevel level
   let start = GameState 1 3 0
   showGameState start startTime fonts
-  renderLevel level
+  renderLevel ilevel
 
 renderLevel :: GameLevel -> IO ()
 renderLevel (GameLevel objects) = preservingMatrix $ do
@@ -132,12 +123,13 @@ showText text (Vector x y) fontColors s fonts Title = preservingMatrix $ do
   viewport $= (Position (getDistanceFromBorderToMakeScreenCentered ss) 0, modifySizeToSquare ss)
   translate $ Vector3 x y 0
   scale s s s
-  renderFont (fonts !! 0) text All
+  renderFont (title fonts) text All
+  swapBuffers
 showText text (Vector x y) fontColors s fonts Regular = preservingMatrix $ do
   color $ Color3 (fontColors !! 0) (fontColors !! 1) (fontColors !! 2)
   translate $ Vector3 x y 0
   scale s s s
-  renderFont (fonts !! 1) text All
+  renderFont (regular fonts) text All
 
 showGameState :: GameState -> IORef UTCTime -> Fonts -> IO()
 showGameState (GameState {level = l, lifeCount = lc, score = s}) startTime fonts  = do
@@ -152,4 +144,4 @@ initFonts = do
   fontTitle <- createOutlineFont "FontTitle.ttf"
   setFontFaceSize fontNormal 1 1
   setFontFaceSize fontTitle 1 1
-  return $ fontTitle : fontNormal : []
+  return $ Fonts fontTitle fontNormal
