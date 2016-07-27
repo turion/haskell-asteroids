@@ -14,7 +14,7 @@ import FRP.Yampa.Event
 -- Collisions
 
 radius :: GameObjectType -> GLfloat
-radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
+radius (Asteroid scale _ _)   = scale * 0.05 -- TODO make dependent on shape
 radius Ship                 = 0.05
 radius EnemyShip            = 0.05
 radius Projectile           = 0.02
@@ -52,8 +52,10 @@ collide object other
         v2Remaining = v2 ^-^ v2Colliding
 
         -- calculate results of the actually colliding parts via an inelastic collision
-        v1PostCollision = v2Colliding ^-^ v1
-        v2PostCollision = v1Colliding ^-^ v2
+        v1PostCollision = v2Colliding ^-^ v1Colliding
+        --v1PostCollision = v2Colliding ^-^ v1
+        v2PostCollision = v1Colliding ^-^ v2Colliding
+        --v2PostCollision = v1Colliding ^-^ v2
 
         -- add the remaining velocities not involved in the collision
         deltaV1 = v1PostCollision ^+^ v1Remaining
@@ -63,19 +65,21 @@ collide object other
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = radiusSum - distance
-        deltaL1 =    correction *^ collisionNormal
-        deltaL2 = (-correction) *^ collisionNormal
+        deltaL1 =    (correction * 4) *^ collisionNormal
+        deltaL2 = (-correction * 4) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
 
 torusfy :: Location -> Location
 torusfy    (Vector x y)
-    | x < -1.1 = torusfy (Vector (x + 2.2) y)
-    | x >  1.1 = torusfy (Vector (x - 2.2) y)
-    | y < -1.1 = torusfy (Vector x (y + 2.2))
-    | y >  1.1 = torusfy (Vector x (y - 2.2))
+    | x < -a = torusfy (Vector (x + 2 * a) y)
+    | x >  a = torusfy (Vector (x - 2 * a) y)
+    | y < -a = torusfy (Vector x (y + 2 * a))
+    | y >  a = torusfy (Vector x (y - 2 * a))
     | otherwise = Vector x y
+    where
+     a = 1.05
 
 
 

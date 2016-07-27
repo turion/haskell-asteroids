@@ -15,6 +15,8 @@ module Datatypes (
   Acceleration,
   Orientation,
   Scale,
+  Rotation,
+  mod2Pi,
   CollisionCorrection(..)
   ) where
 
@@ -46,6 +48,7 @@ type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
 type Scale = GLfloat
+type Rotation = GLfloat
 
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
@@ -55,7 +58,7 @@ instance VectorSpace Orientation GLfloat where
 
 -- Game types: GameObjectType, GameObject, GameLevel --
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
+data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape Rotation | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
@@ -100,4 +103,10 @@ instance (VectorSpace v a) => VectorSpace (Event v) a where
     NoEvent `dot` Event v = 0
     Event v `dot` NoEvent = 0
     Event v `dot` Event w = v `dot` w
+
+mod2Pi :: GLfloat -> GLfloat
+mod2Pi a | a > 0 && a > 2 * pi = mod2Pi $ a - 2 * pi
+         | a < 0 && a < 2 * pi = mod2Pi $ a + 2 * pi
+         | a < 0 = a + 2 * pi
+         | otherwise = a
 

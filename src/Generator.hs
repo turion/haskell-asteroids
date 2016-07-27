@@ -13,13 +13,19 @@ import Physics
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
   objects <- generateSeveralObjects enemyAmount asteroidAmount
-  return $ GameLevel objects
+  --return $ GameLevel objects
+  return $ GameLevel [GameObject (Vector 0 0) (Vector 0 0) 0 Ship,
+                      GameObject (Vector 0.1 0.1) (Vector 0 0) (-0.79) EnemyShip,
+                      GameObject (Vector (-0.1) (-0.1)) (Vector 0 0) (-2) EnemyShip,
+                      GameObject (Vector (-0.6) 0.6) (Vector 0 0) (0.79) EnemyShip,
+                      GameObject (Vector 0.4 (-0.4)) (Vector 0 0) (3.79) EnemyShip,
+                      GameObject (Vector 0.3 0.3) (Vector 0 0) (-0.78) EnemyShip]
 
 generateSeveralObjects :: Int -> Int -> IO [GameObject]
 generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 Ship]
 generateSeveralObjects 0 asteroids = do
   rest <- generateSeveralObjects 0 (asteroids - 1)
-  first <- generateGameObject (Asteroid 1.0 (Shape [])) rest
+  first <- generateGameObject (Asteroid 1.0 (Shape []) 0) rest
   return $ first:rest
 generateSeveralObjects enemies asteroids = do
   rest <- generateSeveralObjects (enemies-1) asteroids
@@ -30,15 +36,17 @@ generateGameObject :: GameObjectType -> [GameObject] -> IO GameObject
 generateGameObject objType objects = do
   randomRadius <- ([1.0, 1.5, 2.0] !!) <$> randomRIO(0,2)
   let velocityRange = 0.03
+      rotationRange = 0.8
   x <- randomIO
   y <- randomIO
   o <- randomIO
+  randomRotation <- randomRIO (-rotationRange, rotationRange)
   v1 <- randomRIO (-velocityRange, velocityRange)
   v2 <- randomRIO (-velocityRange, velocityRange)
   randomShape <- generateAsteroidShape
   let newObjectType | objType == EnemyShip = objType
-                    | otherwise = Asteroid randomRadius randomShape
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*360) newObjectType
+                    | otherwise = Asteroid randomRadius randomShape randomRotation
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*pi) newObjectType
   if not (overlap newObject objects)
     then return newObject
     else generateGameObject newObjectType objects

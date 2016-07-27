@@ -13,6 +13,7 @@ import Graphics.UI.GLUT
 import Graphics.Rendering.FTGL
 import Data.IORef
 import Data.Time.Clock
+import Data.Fixed
 
 import Datatypes
 import Generator
@@ -65,7 +66,7 @@ drawGameObjectType EnemyShip = do
                                  ( 0.050, -0.050),
                                  ( 0.000, -0.025),
                                  (-0.050, -0.050)]
-drawGameObjectType (Asteroid s (Shape shape))= do
+drawGameObjectType (Asteroid s (Shape shape) _)= do
     scale s s s
     drawPolygon (0.4, 0.4, 0.4) [(x vector, y vector) | vector <- shape]        --TODO test this
 drawGameObjectType Projectile = do
@@ -82,6 +83,8 @@ drawGameObjectType EnemyProjectile = do
 drawGameObject ::   GameObject ->   IO ()
 drawGameObject      GameObject { location = location, orientation = orientation, gameObjectType = gameObjectType}     = do
     preservingMatrix $ do
+       -- print $ (mod' (orientation) pi)-- + pi / 2
+        print $ mod2Pi $ orientation + pi / 2
         translate $ Vector3 (x location) (y location) 0
         rotate (orientation * 360 / (2 * pi)) $ Vector3 0 0 1       --degree or radians?
         drawGameObjectType gameObjectType

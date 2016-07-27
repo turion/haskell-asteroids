@@ -13,14 +13,15 @@ import Control.Concurrent
 -- Haskelloids
 import Datatypes
 import UI
+import AI
 import Graphics
 import Physics
 import Generator
 
 -- iX stands for the initial value of X
-animateGameObject :: GameObject ->                                             SF (Event CollisionCorrection, UserInput) GameObject
-animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (collisionCorrection, userInput) -> do
-    let input = if gameObjectType == Ship then userInput else  UserInput 0.0 0.0
+animateGameObject :: GameObject ->  GameObject ->                               SF (Event CollisionCorrection, UserInput) GameObject
+animateGameObject iObject@(GameObject iLocation iVelocity iOrientation gameObjectType) player = proc (collisionCorrection, userInput) -> do
+    let input = if gameObjectType == Ship then userInput else if gameObjectType == EnemyShip then aim iObject player else rotateAsteroid gameObjectType
     orientation      <- (iOrientation+) ^<< integral -< turn input
     let acc = acceleration input *^ Vector (-sin orientation) (cos orientation)
     velocity         <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
@@ -33,9 +34,15 @@ type CollisionEvents = [Event CollisionCorrection]
 
 animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput) GameLevel
 animateManyObjects    (GameLevel [])                 = arr $ const $ GameLevel []
-animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input) -> do
-    object              <- animateGameObject iObject               -< (event, input)
-    (GameLevel objects) <- animateManyObjects (GameLevel iObjects) -< (events, input)
+animateManyObjects    (GameLevel [player])           = proc ((event:events), input) -> do
+    object              <- animateGameObject player player               -< (event, input)
+    returnA             -< GameLevel [object]
+{-animateManyObjects    (GameLevel [player,iObject])           = proc ((event:events), input) -> do
+    object              <- animateGameObject iObject player               -< (event, input)
+    returnA             -< GameLevel [player]-}
+animateManyObjects    (GameLevel (player:iObject:iObjects)) = proc ((event:events), input) -> do
+    object              <- animateGameObject iObject player               -< (event, input)
+    (GameLevel objects) <- animateManyObjects (GameLevel (player:iObjects)) -< (events, input)
     returnA             -< GameLevel (object:objects)
 
 collideAll :: GameLevel ->        CollisionEvents
