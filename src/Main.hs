@@ -29,43 +29,66 @@ animateGameObject (GameObject iLocation iVelocity iOrientation gameObjectType) =
     returnA          -< GameObject location velocity orientation gameObjectType
 
 --lists are not necessarily of same size --> use length of list (maybe)
-type CollisionEvents = [Event CollisionCorrection]
+type CorrectionEvents = [Event CollisionCorrection]
+type ExplosionEvents = [Event Circle]
 
-animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput) GameLevel
+animateManyObjects :: GameLevel ->                   SF (CorrectionEvents, UserInput) GameLevel
 animateManyObjects    (GameLevel [])                 = arr $ const $ GameLevel []
 animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input) -> do
     object              <- animateGameObject iObject               -< (event, input)
     (GameLevel objects) <- animateManyObjects (GameLevel iObjects) -< (events, input)
     returnA             -< GameLevel (object:objects)
 
-collideAll :: GameLevel ->        CollisionEvents
-collideAll    (GameLevel [])      = []
-collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel objects)) where
-    collideWithRest :: [GameObject] ->  CollisionEvents -> CollisionEvents
-    collideWithRest    []               collisionEvents    = collisionEvents
-    collideWithRest    (object:objects) events             = parallelAdd [collideWithAllOthers object objects, restEvents] where
-        restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
+collideAll :: GameLevel ->        (CorrectionEvents, ExplosionEvents)
+collideAll    (GameLevel [])      = ([], [])
+collideAll    (GameLevel objects) = collideWithRest objects emptyEvents where
+    emptyEvents = ((noEvents (GameLevel objects)), [])
+    collideWithRest :: [GameObject] ->  (CorrectionEvents, ExplosionEvents) -> (CorrectionEvents, ExplosionEvents)
+    collideWithRest    []               events                                = events
+    collideWithRest    (object:objects) (collisions, explosions)              = (correctionEvents, explosionEvents) where
+        (objectCorrections, objectExplosions) = collideWithAllOthers object objects
+        explosionEvents = objectExplosions ++ restExplosions
+        correctionEvents = parallelAdd [objectCorrections, (NoEvent : restCorrections)]
+        (restCorrections, restExplosions) = collideWithRest objects (objectCorrections, objectExplosions)
 
 
--- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
-parallelAdd :: [CollisionEvents] -> CollisionEvents
+-- where for integers instead of Events, parallelAdd [[1,2,3,4], [6,5,4,3]] -> [7,7,7,7]
+parallelAdd :: [CorrectionEvents] -> CorrectionEvents
 parallelAdd                         = map sumEvents . transpose
 
-collideWithAllOthers :: GameObject -> [GameObject] -> CollisionEvents
-collideWithAllOthers    _             []              = [NoEvent]
-collideWithAllOthers    object        others          = [sumEvents [fst (collide object other) | other <- others]] ++ [snd (collide object other) | other <- others]
+collideWithAllOthers :: GameObject -> [GameObject] -> (CorrectionEvents, ExplosionEvents)
+collideWithAllOthers    _             []              = ([NoEvent], [NoEvent])
+collideWithAllOthers    object        others          = (corrections, explosions) where
+    collisions = [collide object other | other <- others]
+    corrections = [sumEvents firstCorrections] ++ otherCorrections
+    (firstCorrections, otherCorrections) = getCorrections collisions
+    explosions = getExplosions collisions
+
+getExplosions :: [Event CollisionResult] ->                        ExplosionEvents
+getExplosions    []                                                = []
+getExplosions    (Event (Explosion (Circle center size)): results) = (Explosion (Circle center size): getExplosions results)
+getExplosions    (_ : results)                                     = (NoEvent : getExplosions results)
+
+getCorrections :: [Event CollisionResult] ->                  (CorrectionEvents, CorrectionEvents)
+getCorrections    []                                          = ([], [])
+getCorrections    (Event (Correction (left, right)): results) = ((Event left : objectCorrections), (Event right, otherCorrections)) where
+    objectCorrections = fst (getCorrections results)
+    otherCorrections = snd (getCorrections results)
+getCorrections    (_                             : results)   = ((NoEvent: objectCorrections), (NoEvent: otherCorrections)) where
+    objectCorrections = fst (getCorrections results)
+    otherCorrections = snd (getCorrections results)
 
 sumEvents :: [Event CollisionCorrection] -> Event CollisionCorrection
-sumEvents                                   = foldl (^+^) NoEvent
+sumEvents                                    = foldl (^+^) NoEvent
 
-noEvents :: GameLevel -> CollisionEvents
+noEvents :: GameLevel -> CorrectionEvents
 noEvents = map (const NoEvent) . objects
 
 game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
     rec
-        events <- iPre (noEvents iLevel)    -< collideAll level
-        level  <- animateManyObjects iLevel -< (events, input)
+        (correctionEvents, explosionEvents) <- iPre ((noEvents iLevel), []) -< collideAll level
+        level                               <- animateManyObjects iLevel    -< (correctionEvents, input)
     returnA -< level
 
 -- Main

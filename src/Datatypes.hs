@@ -15,7 +15,9 @@ module Datatypes (
   Acceleration,
   Orientation,
   Scale,
-  CollisionCorrection(..)
+  CollisionCorrection(..),
+  Circle(..),
+  CollisionResult(..)
   ) where
 
 import Graphics.UI.GLUT
@@ -59,9 +61,9 @@ data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | Ene
    deriving (Eq, Show)
 
 data GameObject = GameObject {
-  location :: Location,
-  velocity :: Velocity,
-  orientation :: Orientation,
+  location       :: Location,
+  velocity       :: Velocity,
+  orientation    :: Orientation,
   gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 
@@ -70,9 +72,9 @@ data GameLevel = EmptyLevel | GameLevel {
 } deriving (Eq, Show)
 
 data GameState = GameState {
-  level :: Integer,
+  level     :: Integer,
   lifeCount :: Integer,
-  score :: Integer
+  score     :: Integer
 }
 
 type Fonts = [Graphics.Rendering.FTGL.Font]
@@ -101,3 +103,9 @@ instance (VectorSpace v a) => VectorSpace (Event v) a where
     Event v `dot` NoEvent = 0
     Event v `dot` Event w = v `dot` w
 
+data Circle = Circle {
+    circleCenter :: Location,
+    circleRadius :: GLfloat
+}
+
+data CollisionResult = Correction (CollisionCorrection, CollisionCorrection) | Explosion Circle

@@ -36,10 +36,24 @@ overlapAny    object        []              = False
 overlapAny    object        (other:[])      = overlap object other
 overlapAny    object        (other:others)  = (overlap object other) || (overlapAny object others)
 
-collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
-collide object other 
-    | overlap object other = (Event objectCollisionCorrection , Event otherCollisionCorrection)
-    | otherwise            = (NoEvent, NoEvent) where
+collide :: GameObject -> GameObject -> Event CollisionResult
+collide    object        other = case (gameObjectType object, gameObjectType other) of
+    (Asteroid _ _, Asteroid _ _) -> collideAsteroids object other
+    (_           , _           ) -> explodeObjects object other
+
+explodeObjects :: GameObject -> GameObject -> Event CollisionResult
+explodeObjects    object        other
+    | overlap object other = Event (Explosion (Circle center size))
+    | otherwise            = NoEvent where
+        difference = location object ^-^ location other
+        center = location object ^+^ ((-0.5) *^ difference)
+        size = 0.1
+
+
+collideAsteroids :: GameObject -> GameObject -> Event CollisionResult
+collideAsteroids object other
+    | overlap object other = Event (Correction (objectCollisionCorrection , otherCollisionCorrection))
+    | otherwise            = NoEvent where
         -- calculate collision normal
         difference = location object ^-^ location other
         collisionNormal = FRP.Yampa.VectorSpace.normalize difference
@@ -87,66 +101,17 @@ torusfy    (Vector x y)
 -- Alternate Approach following the Yampa Arcade Paper: 
 
 --  Game
-
+--
 --data ObjectInput = ObjectInput{
 --    iHit :: Event (),
 --    iUserInput :: UserInput,
 --    iCollisionCorrection :: CollisionCorrection
 --}
-
+--
 --data ObjectOutput = ObjectOutput{
 --    gameObject :: GameObject,
 --    killEvent :: Event (),
 --    spawnEvent :: Event [GameObject]
 --}
-
+--
 --type Object = SF ObjectInput ObjectOutput
-
---object :: GameObject ->               Object
---object (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (ObjectInput hit userInput, collisionCorrection) -> do
---    orientation <- (iOrientation+) ^<< integral -< turn userInput
---    let acc = acceleration userInput *^ Vector (-sin orientation) (cos orientation)
---    velocity    <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collision_correction)
---    location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collision_correction)
---    die         <- edge                                -< hit
---    returnA -<
---        -- depending on the object type, return different values
---        ObjectOutput {
---            gameObject = GameObject location velocity orientation gameObjectType,
---            killEvent = die,
---            spawnEvent =
---                fire ‘tag‘
---                [GameObject location (2 *^ velocity) orientation Projectile]
---        }
-
---gameCore :: IL Object -> SF (UserInput, IL ObjectOutput) (IL ObjectOutput)
---gameCore objs =
---    dpSwitch route
---    objs
---    (arr killOrSpawn >>> notYet)
---    (\sfs’ f -> gameCore (f sfs’))
-
---route :: (UserInput, IL ObjOutput) -> IL sf -> IL (ObjInput, sf)
---route    (userInput, outputs)         objectss     = mapIL routeAux objects where
---    routeAux (id, object) =
---        (ObjectInput {
---            iHit =  if id ‘elem‘ hits
---                    then Event ()
---                    else noEvent,
---            iUserInput = userInput,
---            iCollisionCorrection = ?
---        }, object)
---    hits = collisions (assocsIL (fmap gameObject outputs))
-
-
----- todo
---killOrSpawn :: (a, IL ObjectOutput) -> (Event (IL Object->IL Object))
---killOrSpawn    (_, outputs) = foldl (mergeBy (.)) noEvent es where
---    es :: [Event (IL Object -> IL Object)]
---    es = [ mergeBy (.)
---            (killEvent oo
---            ‘tag‘ (deleteIL k))
---            (fmap (foldl (.) id
---            . map insertIL_)
---            (spawnEvent oo))
---         | (k,oo) <- assocsIL outputs ]
