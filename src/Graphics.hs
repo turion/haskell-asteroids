@@ -68,7 +68,7 @@ drawGameObjectType EnemyShip = do
                                  (-0.050, -0.050)]
 drawGameObjectType (Asteroid s (Shape shape) _)= do
     scale s s s
-    drawPolygon (0.4, 0.4, 0.4) [(x vector, y vector) | vector <- shape]        --TODO test this
+    drawPolygon (0.4, 0.4, 0.4) [(x vector, y vector) | vector <- shape]
 drawGameObjectType Projectile = do
     drawPolygon (0.0, 1.0, 0.0) [( 0.005,  0.020),
                                  ( 0.005, -0.020),

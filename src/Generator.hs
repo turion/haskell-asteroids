@@ -14,12 +14,6 @@ generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
   objects <- generateSeveralObjects enemyAmount asteroidAmount
   return $ GameLevel objects
-  {-return $ GameLevel [GameObject (Vector 0 0) (Vector 0 0) 0 Ship,
-                      GameObject (Vector 0.1 0.1) (Vector 0 0) (-0.79) EnemyShip,
-                      GameObject (Vector (-0.1) (-0.1)) (Vector 0 0) (-2) EnemyShip,
-                      GameObject (Vector (-0.6) 0.6) (Vector 0 0) (0.79) EnemyShip,
-                      GameObject (Vector 0.4 (-0.4)) (Vector 0 0) (3.79) EnemyShip,
-                      GameObject (Vector 0.3 0.3) (Vector 0 0) (-0.78) EnemyShip]-}
 
 generateSeveralObjects :: Int -> Int -> IO [GameObject]
 generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 0 Ship]
@@ -45,9 +39,9 @@ generateGameObject objType objects = do
   v2 <- randomRIO (-velocityRange, velocityRange)
   randomShape <- generateAsteroidShape
   let newObjectType | objType == EnemyShip = objType
-                    | otherwise = Asteroid randomRadius randomShape randomRotation
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*pi) (length objects) newObjectType
-  if not (overlap newObject objects)
+                    | otherwise = Asteroid randomRadius randomShape
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*2*pi) (length objects) newObjectType
+  if not (overlapAny newObject objects)
     then return newObject
     else generateGameObject newObjectType objects
 

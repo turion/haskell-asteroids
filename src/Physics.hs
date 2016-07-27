@@ -2,6 +2,7 @@ module Physics (
     radius,
     collide,
     overlap,
+    overlapAny,
     torusfy
   ) where
 
@@ -20,16 +21,20 @@ radius EnemyShip            = 0.05
 radius Projectile           = 0.02
 radius EnemyProjectile      = 0.02
 
-overlap :: GameObject -> [GameObject] -> Bool
-overlap o1 [] = False
-overlap o1 (o2:os)
-  | d < (r1 + r2) = True
-  | (length os) > 0 = overlap o1 os
-  | otherwise = False
-  where
-    r1 = radius $ gameObjectType o1
-    r2 = radius $ gameObjectType o2
-    d = norm $ location o1 ^-^ location o2
+overlap :: GameObject -> GameObject -> Bool
+overlap    object        other
+    | object == other = False
+    | otherwise       = distance <= (r1 + r2) where
+        distance = norm $ loc1 ^-^ loc2
+        loc1 = location object
+        loc2 = location other
+        r1 = radius $ gameObjectType object
+        r2 = radius $ gameObjectType other
+
+overlapAny :: GameObject -> [GameObject] -> Bool
+overlapAny    object        []              = False
+overlapAny    object        (other:[])      = overlap object other
+overlapAny    object        (other:others)  = (overlap object other) || (overlapAny object others)
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
@@ -84,7 +89,7 @@ torusfy    (Vector x y)
 
 
 
--- Alternate Approach following the Yampa Arcade Paper: 
+-- Alternate Approach following the Yampa Arcade Paper:
 
 --  Game
 
