@@ -1,7 +1,8 @@
 module Physics (
     radius,
     collide,
-    overlap
+    overlap,
+    torusfy
   ) where
 
 import Datatypes
@@ -19,20 +20,19 @@ radius EnemyShip            = 0.05
 radius Projectile           = 0.02
 radius EnemyProjectile      = 0.02
 
-overlap :: GameObject -> [GameObject] -> Bool
-overlap o1 [] = False
-overlap o1 (o2:os)
-  | d < (r1 + r2) = True
-  | (length os) > 0 = overlap o1 os
-  | otherwise = False
-  where
-    r1 = radius $ gameObjectType o1
-    r2 = radius $ gameObjectType o2
-    d = norm $ location o1 ^-^ location o2
+overlap :: GameObject -> GameObject -> Bool
+overlap    object        other         
+    | object == other = False
+    | otherwise       = distance <= (r1 + r2) where
+        distance = norm $ loc1 ^-^ loc2
+        loc1 = location object
+        loc2 = location other
+        r1 = radius $ gameObjectType object
+        r2 = radius $ gameObjectType other
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
-    | overlap object [other] = (Event objectCollisionCorrection , Event otherCollisionCorrection)
+    | overlap object other = (Event objectCollisionCorrection , Event otherCollisionCorrection)
     | otherwise            = (NoEvent, NoEvent) where
         -- calculate collision normal
         difference = location object ^-^ location other
@@ -51,8 +51,8 @@ collide object other
         v2Remaining = v2 ^-^ v2Colliding
 
         -- calculate results of the actually colliding parts via an inelastic collision
-        v1PostCollision = v2Colliding ^-^ v1Colliding
-        v2PostCollision = v1Colliding ^-^ v2Colliding
+        v1PostCollision = v2Colliding ^-^ v1
+        v2PostCollision = v1Colliding ^-^ v2
 
         -- add the remaining velocities not involved in the collision
         deltaV1 = v1PostCollision ^+^ v1Remaining
@@ -62,14 +62,23 @@ collide object other
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = radiusSum - distance
-        deltaL1 = ( correction * 4) *^ collisionNormal
-        deltaL2 = (-correction * 4) *^ collisionNormal
+        deltaL1 =    correction *^ collisionNormal
+        deltaL2 = (-correction) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
-        otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2 
+        otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
+
+torusfy :: Location -> Location
+torusfy    (Vector x y)
+    | x < -1.1 = torusfy (Vector (x + 2.2) y)
+    | x >  1.1 = torusfy (Vector (x - 2.2) y)
+    | y < -1.1 = torusfy (Vector x (y + 2.2))
+    | y >  1.1 = torusfy (Vector x (y - 2.2))
+    | otherwise = Vector x y
 
 
--- Alternate Approach following the Yampa Arcade Paper:
+
+-- Alternate Approach following the Yampa Arcade Paper: 
 
 --  Game
 
