@@ -15,6 +15,7 @@ import Datatypes
 import UI
 import Graphics
 import Physics
+import Generator
 
 -- iX stands for the initial value of X
 animateGameObject :: GameObject ->                                             SF (Event CollisionCorrection, UserInput) GameObject
@@ -45,6 +46,7 @@ collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel
     collideWithRest    (object:objects) events             = parallelAdd [collideWithAllOthers object objects, restEvents] where
         restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
 
+
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CollisionEvents] -> CollisionEvents
 parallelAdd                         = map sumEvents . transpose
@@ -66,7 +68,6 @@ game iLevel = proc (input) -> do
         level  <- animateManyObjects iLevel -< (events, input)
     returnA -< level
 
-
 -- Main
 
 main :: IO ()
@@ -75,17 +76,23 @@ main    = do
     output <- newIORef (EmptyLevel)
     t <- getCurrentTime
     time <- newIORef t
+    startTime <- newIORef t
     window <- initGL
-    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game initialGameState
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window input $ Event $ KeyboardInput key keyState modifiers)
+    fullScreen
+    reshapeCallback $= Just reshape
+    fonts <- initFonts
+    level <- generateLevel 5 10
+    pauseTriggered <- newIORef False
+    resetTriggered <- newIORef False
+    handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window pauseTriggered resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    displayCallback $= (readIORef output >>= renderLevel)
+    --levelToRender <- readIORef output
+    --displayCallback $= (readIORef output >>= renderLevel)
+    displayCallback $= (drawScreen output startTime fonts resetTriggered)
     t' <- getCurrentTime
     writeIORef time t'
-    reshapeCallback $= Just reshape
-    fullScreen
     mainLoop
-
 
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()
 idle    userInput          time             handle                             = do
@@ -95,65 +102,10 @@ idle    userInput          time             handle                             =
     let deltaTime = realToFrac $ diffUTCTime now before
     _ <- react handle (deltaTime, Just input)
     writeIORef time now
-    postRedisplay Nothing    
+    postRedisplay Nothing
 
 
 actuator :: IORef GameLevel -> ReactHandle UserInput GameLevel -> Bool -> GameLevel -> IO Bool
 actuator    output             _                                  _       gameLevel    = do
     writeIORef output gameLevel
     return False
-
-initialGameState :: GameLevel
-initialGameState = GameLevel [initialShip, initialAsteroid, otherAsteroid, thirdAsteroid]
-
-initialShip :: GameObject
-initialShip = GameObject (Vector 0.0 0.0) (Vector 0.0 0.0) 0.0 Ship
-
-initialEnemies :: [GameObject]
-initialEnemies = []
-
-initialAsteroid :: GameObject
-initialAsteroid = GameObject (Vector 0.5 0.5) (Vector (-0.1) 0.0) 0.0 (Asteroid 1.0 shape) where
-    shape = Shape [  (Vector   0.000    0.050 ),
-                     (Vector   0.040    0.030 ),
-                     (Vector   0.030    0.040 ),
-                     (Vector   0.050    0.000 ),
-                     (Vector   0.030  (-0.040)),
-                     (Vector   0.040  (-0.030)),
-                     (Vector   0.000  (-0.050)),
-                     (Vector (-0.040) (-0.030)),
-                     (Vector (-0.030) (-0.040)),
-                     (Vector (-0.050)   0.000 ),
-                     (Vector (-0.050)   0.000 ),
-                     (Vector (-0.040)   0.030 )]
-
-otherAsteroid :: GameObject
-otherAsteroid = GameObject (Vector (-0.5) (-0.5)) (Vector 0.0 0.1) 0.0 (Asteroid 1.0 shape) where
-    shape = Shape [  (Vector   0.000    0.050 ),
-                     (Vector   0.040    0.030 ),
-                     (Vector   0.030    0.040 ),
-                     (Vector   0.050    0.000 ),
-                     (Vector   0.030  (-0.040)),
-                     (Vector   0.040  (-0.030)),
-                     (Vector   0.000  (-0.050)),
-                     (Vector (-0.040) (-0.030)),
-                     (Vector (-0.030) (-0.040)),
-                     (Vector (-0.050)   0.000 ),
-                     (Vector (-0.050)   0.000 ),
-                     (Vector (-0.040)   0.030 )]
-
-thirdAsteroid :: GameObject
-thirdAsteroid = GameObject (Vector 0.5 (-0.5)) (Vector 0.0 0.1) 0.0 (Asteroid 1.0 shape) where
-    shape = Shape [  (Vector   0.000    0.050 ),
-                     (Vector   0.040    0.030 ),
-                     (Vector   0.030    0.040 ),
-                     (Vector   0.050    0.000 ),
-                     (Vector   0.030  (-0.040)),
-                     (Vector   0.040  (-0.030)),
-                     (Vector   0.000  (-0.050)),
-                     (Vector (-0.040) (-0.030)),
-                     (Vector (-0.030) (-0.040)),
-                     (Vector (-0.050)   0.000 ),
-                     (Vector (-0.050)   0.000 ),
-                     (Vector (-0.040)   0.030 )]
-
