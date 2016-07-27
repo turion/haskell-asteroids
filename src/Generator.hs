@@ -13,16 +13,16 @@ import Physics
 generateLevel :: Int -> Int -> IO GameLevel
 generateLevel enemyAmount asteroidAmount = do
   objects <- generateSeveralObjects enemyAmount asteroidAmount
-  --return $ GameLevel objects
-  return $ GameLevel [GameObject (Vector 0 0) (Vector 0 0) 0 Ship,
+  return $ GameLevel objects
+  {-return $ GameLevel [GameObject (Vector 0 0) (Vector 0 0) 0 Ship,
                       GameObject (Vector 0.1 0.1) (Vector 0 0) (-0.79) EnemyShip,
                       GameObject (Vector (-0.1) (-0.1)) (Vector 0 0) (-2) EnemyShip,
                       GameObject (Vector (-0.6) 0.6) (Vector 0 0) (0.79) EnemyShip,
                       GameObject (Vector 0.4 (-0.4)) (Vector 0 0) (3.79) EnemyShip,
-                      GameObject (Vector 0.3 0.3) (Vector 0 0) (-0.78) EnemyShip]
+                      GameObject (Vector 0.3 0.3) (Vector 0 0) (-0.78) EnemyShip]-}
 
 generateSeveralObjects :: Int -> Int -> IO [GameObject]
-generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 Ship]
+generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 0 Ship]
 generateSeveralObjects 0 asteroids = do
   rest <- generateSeveralObjects 0 (asteroids - 1)
   first <- generateGameObject (Asteroid 1.0 (Shape []) 0) rest
@@ -46,7 +46,7 @@ generateGameObject objType objects = do
   randomShape <- generateAsteroidShape
   let newObjectType | objType == EnemyShip = objType
                     | otherwise = Asteroid randomRadius randomShape randomRotation
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*pi) newObjectType
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*pi) (length objects) newObjectType
   if not (overlap newObject objects)
     then return newObject
     else generateGameObject newObjectType objects

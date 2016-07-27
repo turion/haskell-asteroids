@@ -16,6 +16,7 @@ module Datatypes (
   Orientation,
   Scale,
   Rotation,
+  ID,
   CollisionCorrection(..)
   ) where
 
@@ -49,6 +50,7 @@ type Acceleration = GLfloat
 type Orientation = GLfloat
 type Scale = GLfloat
 type Rotation = GLfloat
+type ID = Int
 
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
@@ -66,6 +68,7 @@ data GameObject = GameObject {
   location :: Location,
   velocity :: Velocity,
   orientation :: Orientation,
+  objectId :: ID,
   gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 

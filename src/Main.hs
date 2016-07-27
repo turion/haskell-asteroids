@@ -19,31 +19,32 @@ import Physics
 import Generator
 
 -- iX stands for the initial value of X
-animateGameObject :: GameObject ->  GameObject ->                               SF (Event CollisionCorrection, UserInput) GameObject
-animateGameObject iObject@(GameObject iLocation iVelocity iOrientation gameObjectType) player = proc (collisionCorrection, userInput) -> do
-    let input = if gameObjectType == Ship then userInput else if gameObjectType == EnemyShip then aim iObject player else rotateAsteroid gameObjectType
+animateGameObject :: GameObject ->                             SF (Event CollisionCorrection, UserInput, GameLevel) GameObject
+animateGameObject iObject@(GameObject iLocation iVelocity iOrientation id gameObjectType) = proc (collisionCorrection, userInput, lastLevel) -> do
+    let input = if gameObjectType == Ship then userInput else if gameObjectType == EnemyShip then aim id lastLevel else rotateAsteroid gameObjectType
     orientation      <- (iOrientation+) ^<< integral -< turn input
     let acc = acceleration input *^ Vector (-sin orientation) (cos orientation)
     velocity         <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
     preTorusLocation <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
     let location = torusfy preTorusLocation
-    returnA          -< GameObject location velocity orientation gameObjectType
+    returnA          -< GameObject location velocity orientation id gameObjectType
 
 --lists are not necessarily of same size --> use length of list (maybe)
 type CollisionEvents = [Event CollisionCorrection]
 
-animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput) GameLevel
+animateManyObjects :: GameLevel ->                   SF (CollisionEvents, UserInput, GameLevel) GameLevel
 animateManyObjects    (GameLevel [])                 = arr $ const $ GameLevel []
-animateManyObjects    (GameLevel [player])           = proc ((event:events), input) -> do
+animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input, lastLevel) -> do
+    object              <- animateGameObject iObject       -< (event, input, lastLevel)
+    (GameLevel objects) <- animateManyObjects (GameLevel (iObjects)) -< (events, input, lastLevel)
+    returnA             -< GameLevel (object:objects)
+{-animateManyObjects    (GameLevel [player])           = proc ((event:events), input) -> do
     object              <- animateGameObject player player               -< (event, input)
-    returnA             -< GameLevel [object]
-{-animateManyObjects    (GameLevel [player,iObject])           = proc ((event:events), input) -> do
-    object              <- animateGameObject iObject player               -< (event, input)
-    returnA             -< GameLevel [player]-}
-animateManyObjects    (GameLevel (player:iObject:iObjects)) = proc ((event:events), input) -> do
+    returnA             -< GameLevel [object]-}
+{-animateManyObjects    (GameLevel (player:iObject:iObjects)) = proc ((event:events), input) -> do
     object              <- animateGameObject iObject player               -< (event, input)
     (GameLevel objects) <- animateManyObjects (GameLevel (player:iObjects)) -< (events, input)
-    returnA             -< GameLevel (object:objects)
+    returnA             -< GameLevel (object:objects)-}
 
 collideAll :: GameLevel ->        CollisionEvents
 collideAll    (GameLevel [])      = []
@@ -52,7 +53,6 @@ collideAll    (GameLevel objects) = collideWithRest objects (noEvents (GameLevel
     collideWithRest    []               collisionEvents    = collisionEvents
     collideWithRest    (object:objects) events             = parallelAdd [collideWithAllOthers object objects, restEvents] where
         restEvents = (NoEvent : collideWithRest objects (collideWithAllOthers object objects))
-
 
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CollisionEvents] -> CollisionEvents
@@ -68,7 +68,7 @@ sumEvents                                   = foldl (^+^) NoEvent
 noEvents :: GameLevel -> CollisionEvents
 noEvents = map (const NoEvent) . objects
 
-resettedLevel :: GameLevel -> IORef Bool -> IO GameLevel
+{-resettedLevel :: GameLevel -> IORef Bool -> IO GameLevel
 resettedLevel iLevel resetTriggered = do
     resetNeeded <- readIORef resetTriggered
     newLevel <- generateLevel 5 10
@@ -78,16 +78,15 @@ resettedLevel iLevel resetTriggered = do
       writeIORef resetTriggered False
       return ()
     else return ()
-    return level
-
-
+    return level-}
 
 game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
     rec
         -- iLevel <- ioLevel
         events <- iPre (noEvents iLevel)    -< collideAll level
-        level  <- animateManyObjects iLevel -< (events, input)
+        level  <- animateManyObjects iLevel -< (events, input, lastLevel)
+        lastLevel <- iPre (iLevel) -< level
     returnA -< level
 
 -- Main
@@ -105,7 +104,7 @@ main    = do
     t <- getCurrentTime
     time <- newIORef t
     startTime <- newIORef t
-    level <- generateLevel 5 10
+    level <- generateLevel 10 20
     resetTriggered <- newIORef False
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level --  $ resettedLevel level resetTriggered
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
@@ -113,8 +112,6 @@ main    = do
     --levelToRender <- readIORef output
     --displayCallback $= (readIORef output >>= renderLevel)
     displayCallback $= (drawScreen output startTime fonts)
-    t' <- getCurrentTime
-    writeIORef time t'
     mainLoop
 
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()

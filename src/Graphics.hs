@@ -24,7 +24,7 @@ import Generator
 initGL ::  IO Window
 initGL     = do
     getArgsAndInitialize
-    --initialDisplayMode $= [DoubleBuffered]
+    initialDisplayMode $= [DoubleBuffered]
     createWindow "Haskelloids!"
 
 reshape :: ReshapeCallback
@@ -136,6 +136,7 @@ showText text (Vector x y) fontColors s fonts Title = preservingMatrix $ do
   translate $ Vector3 x y 0
   scale s s s
   renderFont (title fonts) text All
+  swapBuffers
 showText text (Vector x y) fontColors s fonts Regular = preservingMatrix $ do
   color $ Color3 (fontColors !! 0) (fontColors !! 1) (fontColors !! 2)
   translate $ Vector3 x y 0

@@ -47,15 +47,17 @@ doObjectsCollide object1 object2 = t >= 0 && radius (gameObjectType object1) + r
 closest :: Location -> Velocity -> Location -> Velocity -> GLfloat
 closest l1 v1 l2 v2 =  ((v1 - v2) `dot` (l1 - l2)) / ((v1 - v2) `dot` (v1 - v2))-}
 
-aim :: GameObject -> GameObject -> UserInput
-aim enemyship ship | rotateClockwiseToAim x1 y1 x2 y2 phi == True = UserInput 0.0 (-1)
-                   | otherwise = UserInput 0.0 1
+aim :: ID -> GameLevel -> UserInput
+aim enemyShipId level | rotateClockwiseToAim x1 y1 x2 y2 phi == True = UserInput 0.0 (-0.7)
+                      | otherwise = UserInput 0.0 0.7
     where
       x1 = x (location ship)
       y1 = y (location ship)
       x2 = x (location enemyship)
       y2 = y (location enemyship)
       o = (orientation enemyship)
+      ( ship:_) = [ object | object <- objects level, gameObjectType object == Ship  ]
+      ( enemyship:_) = [ object | object <- objects level, objectId object == enemyShipId  ]
       --phi = mod2Pi $ o + pi / 2
       phi = mod' (o + pi / 2) (pi * 2)
 
