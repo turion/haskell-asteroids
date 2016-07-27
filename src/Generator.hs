@@ -29,49 +29,40 @@ generateSeveralObjects enemies asteroids = do
 generateGameObject :: GameObjectType -> [GameObject] -> IO GameObject
 generateGameObject objType objects = do
   randomRadius <- ([1.0, 1.5, 2.0] !!) <$> randomRIO(0,2)
+  let velocityRange = 0.03
   x <- randomIO
   y <- randomIO
   o <- randomIO
+  v1 <- randomRIO (-velocityRange, velocityRange)
+  v2 <- randomRIO (-velocityRange, velocityRange)
   randomShape <- generateAsteroidShape
   let newObjectType | objType == EnemyShip = objType
                     | otherwise = Asteroid randomRadius randomShape
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector 0 0) (o*360) newObjectType
-  if not (checkIfObjectOverlapsWithOtherObjects newObject objects)
+  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*360) newObjectType
+  if not (overlap newObject objects)
     then return newObject
-    else do
-       result <- generateGameObject newObjectType objects
-       return result
-
-checkIfObjectOverlapsWithOtherObjects :: GameObject -> [GameObject] -> Bool
-checkIfObjectOverlapsWithOtherObjects o1 [] = False
-checkIfObjectOverlapsWithOtherObjects o1 (o2:os)
-  | d < (r1 + r2) = True
-  | (length os) > 0 = checkIfObjectOverlapsWithOtherObjects o1 os
-  | otherwise = False
-  where
-    r1 = radius $ gameObjectType o1
-    r2 = radius $ gameObjectType o2
-    d = norm $ location o1 ^-^ location o2
+    else generateGameObject newObjectType objects
 
 generateAsteroidShape :: IO Shape
 generateAsteroidShape = do
-  y1 <- randomIO
-  x2 <- randomIO
-  x3 <- randomIO
-  x4 <- randomIO
-  y5 <- randomIO
-  x6 <- randomIO
-  x7 <- randomIO
-  x8 <- randomIO
   let
-    p1 = Vector 0                  (y1 * a + a)
-    p2 = Vector (x2 * b + b)       (x2 * b + b)
-    p3 = Vector (x3 * a + a)                  0
-    p4 = Vector (x4 * b + b)    (-(x4 * b + b))
-    p5 = Vector 0               (-(y5 * a + a))
-    p6 = Vector (-(x6 * b + b)) (-(x6 * b + b))
-    p7 = Vector (-(x7 * a + a))               0
-    p8 = Vector (-(x8 * b + b))    (x8 * b + b)
-    a = 0.025
-    b = 0.0175
+    a = 0.013
+    b = 0.01
+  r1 <- randomRIO (2*a, 3*a)
+  r2 <- randomRIO (2*b, 3*b)
+  r3 <- randomRIO (2*a, 3*a)
+  r4 <- randomRIO (2*b, 3*b)
+  r5 <- randomRIO (2*a, 3*a)
+  r6 <- randomRIO (2*b, 3*b)
+  r7 <- randomRIO (2*a, 3*a)
+  r8 <- randomRIO (2*b, 3*b)
+  let
+    p1 = Vector 0 r1
+    p2 = Vector r2 r2
+    p3 = Vector r3 0
+    p4 = Vector r4 (-r4)
+    p5 = Vector 0 (-r5)
+    p6 = Vector (-r6) (-r6)
+    p7 = Vector (-r7) 0
+    p8 = Vector (-r8) r8
   return $ Shape [p1, p2, p3, p4, p5, p6, p7, p8]

@@ -1,6 +1,7 @@
 module Physics (
     radius,
-    collide
+    collide,
+    overlap
   ) where
 
 import Datatypes
@@ -18,19 +19,20 @@ radius EnemyShip            = 0.05
 radius Projectile           = 0.02
 radius EnemyProjectile      = 0.02
 
-overlap :: GameObject -> GameObject -> Bool
-overlap    object        other         
-    | object == other = False
-    | otherwise       = distance <= (r1 + r2) where
-        distance = norm $ loc1 ^-^ loc2
-        loc1 = location object
-        loc2 = location other
-        r1 = radius $ gameObjectType object
-        r2 = radius $ gameObjectType other
+overlap :: GameObject -> [GameObject] -> Bool
+overlap o1 [] = False
+overlap o1 (o2:os)
+  | d < (r1 + r2) = True
+  | (length os) > 0 = overlap o1 os
+  | otherwise = False
+  where
+    r1 = radius $ gameObjectType o1
+    r2 = radius $ gameObjectType o2
+    d = norm $ location o1 ^-^ location o2
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
-    | overlap object other = (Event objectCollisionCorrection , Event otherCollisionCorrection)
+    | overlap object [other] = (Event objectCollisionCorrection , Event otherCollisionCorrection)
     | otherwise            = (NoEvent, NoEvent) where
         -- calculate collision normal
         difference = location object ^-^ location other
@@ -67,7 +69,7 @@ collide object other
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2 
 
 
--- Alternate Approach following the Yampa Arcade Paper: 
+-- Alternate Approach following the Yampa Arcade Paper:
 
 --  Game
 

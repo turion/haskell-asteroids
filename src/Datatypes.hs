@@ -7,7 +7,9 @@ module Datatypes (
   GameObjectType(..),
   GameLevel(..),
   GameObject(..),
+  GameState(..),
   Shape(..),
+  Fonts,
   Location,
   Velocity,
   Acceleration,
@@ -19,7 +21,7 @@ module Datatypes (
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import FRP.Yampa.Event
-
+import Graphics.Rendering.FTGL
 
 -- Basic types: Vector, GLfloat + types --
 
@@ -27,6 +29,7 @@ data Vector = Vector {
   x :: GLfloat,
   y :: GLfloat
 } deriving (Eq, Show)
+
 
 instance VectorSpace Vector GLfloat where
   zeroVector = Vector 0 0
@@ -50,7 +53,6 @@ instance VectorSpace Orientation GLfloat where
   (^+^) = (+)
   dot = (*)
 
-
 -- Game types: GameObjectType, GameObject, GameLevel --
 
 data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
@@ -67,6 +69,13 @@ data GameLevel = EmptyLevel | GameLevel {
   objects :: [GameObject]
 } deriving (Eq, Show)
 
+data GameState = GameState {
+  level :: Integer,
+  lifeCount :: Integer,
+  score :: Integer
+}
+
+type Fonts = [Graphics.Rendering.FTGL.Font]
 
 data CollisionCorrection = CollisionCorrection {
   deltaLocation :: Location,
