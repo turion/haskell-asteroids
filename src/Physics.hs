@@ -2,6 +2,7 @@ module Physics (
     radius,
     collide,
     overlap,
+    overlapAny,
     torusfy
   ) where
 
@@ -29,6 +30,11 @@ overlap    object        other
         loc2 = location other
         r1 = radius $ gameObjectType object
         r2 = radius $ gameObjectType other
+
+overlapAny :: GameObject -> [GameObject] -> Bool
+overlapAny    object        []              = False
+overlapAny    object        (other:[])      = overlap object other
+overlapAny    object        (other:others)  = (overlap object other) || (overlapAny object others)
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
