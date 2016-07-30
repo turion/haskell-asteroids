@@ -38,7 +38,7 @@ overlapAny    object        (other:others)  = (overlap object other) || (overlap
 
 collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
 collide object other 
-    | overlap object [other] = (Event objectCollisionCorrection , Event otherCollisionCorrection)
+    | overlapAny object [other] = (Event objectCollisionCorrection , Event otherCollisionCorrection)
     | norm difference < 0.00000001 = (NoEvent, NoEvent)
     | otherwise            = (NoEvent, NoEvent) where
         -- calculate collision normal
