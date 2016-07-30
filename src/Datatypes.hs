@@ -9,7 +9,7 @@ module Datatypes (
   GameObject(..),
   GameState(..),
   Shape(..),
-  Fonts(..),
+--  Fonts(..),
   Location,
   Velocity,
   Acceleration,
@@ -23,7 +23,6 @@ module Datatypes (
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import FRP.Yampa.Event
-import Graphics.Rendering.FTGL
 
 -- Basic types: Vector, GLfloat + types --
 
@@ -82,10 +81,10 @@ data GameState = GameState {
   score :: Integer
 }
 
-data Fonts = Fonts {
+{-data Fonts = Fonts {
  title :: Graphics.Rendering.FTGL.Font,
  regular :: Graphics.Rendering.FTGL.Font
- }
+ }-}
 
 data CollisionCorrection = CollisionCorrection {
   deltaLocation :: Location,

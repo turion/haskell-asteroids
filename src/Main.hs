@@ -79,8 +79,7 @@ main    = do
     output <- newIORef (EmptyLevel)
     fullScreen
     reshapeCallback $= Just reshape
-    fonts <- initFonts
-    showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.2 fonts Title
+    showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.002 Title
     threadDelay 2000000
     t <- getCurrentTime
     time <- newIORef t
@@ -90,7 +89,7 @@ main    = do
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    displayCallback $= (drawScreen output startTime fonts)
+    displayCallback $= (drawScreen output startTime)
     mainLoop
 
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()
