@@ -71,8 +71,8 @@ collide object other
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = radiusSum - distance
-        deltaL1 =    (correction ) *^ collisionNormal
-        deltaL2 = (-correction ) *^ collisionNormal
+        deltaL1 =    (correction * 4) *^ collisionNormal
+        deltaL2 = (-correction * 4) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
