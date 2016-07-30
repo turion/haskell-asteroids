@@ -39,7 +39,7 @@ generateGameObject objType objects = do
   v2 <- randomRIO (-velocityRange, velocityRange)
   randomShape <- generateAsteroidShape
   let newObjectType | objType == EnemyShip = objType
-                    | otherwise = Asteroid randomRadius randomShape
+                    | otherwise = Asteroid randomRadius randomShape randomRotation
   let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*2*pi) (length objects) newObjectType
   if not (overlapAny newObject objects)
     then return newObject
