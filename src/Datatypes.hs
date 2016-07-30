@@ -17,6 +17,7 @@ module Datatypes (
   Scale,
   Rotation,
   ID,
+  Shields,
   CollisionCorrection(..)
   ) where
 
@@ -50,6 +51,7 @@ type Orientation = GLfloat
 type Scale = GLfloat
 type Rotation = GLfloat
 type ID = Int
+type Shields = Bool
 
 instance VectorSpace Orientation GLfloat where
   zeroVector = 0
@@ -78,7 +80,9 @@ data GameLevel = EmptyLevel | GameLevel {
 data GameState = GameState {
   level :: Integer,
   lifeCount :: Integer,
-  score :: Integer
+  score :: Integer,
+  shields :: Int,
+  shieldOn :: Bool
 }
 
 {-data Fonts = Fonts {

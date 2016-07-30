@@ -43,15 +43,15 @@ aim enemyShipId level | speedTooFast enemyShip && facingSpeedDirection enemyShip
       y1 = y (location ship)
       x2 = x (location enemyShip)
       y2 = y (location enemyShip)
-      ( ship:_) = [ object | object <- objects level, gameObjectType object == Ship  ]
+      ( ship:_) = [ object | object <- objects level, (gameObjectType object) == Ship ]
       ( enemyShip:_) = [ object | object <- objects level, objectId object == enemyShipId  ]
-      approachingSpeed = 0              -- make it higher (about 0.05) to make the asteroids try to ram the ship
+      approachingSpeed = 0.05              -- make it higher (about 0.05) to make the asteroids try to ram the ship
 
 approachingObject :: GameObject -> GameLevel -> [GameObject]
 approachingObject enemyShip level | length closeObjects > 0 = [closestFromList enemyShip closeObjects]
                                   | otherwise = []
   where
-    closeObjects = [ object | object <- objects level, enemyShip /= object && gameObjectType object /= Ship && distance enemyShip object < d && doObjectsCollide enemyShip object == True]
+    closeObjects = [ object | object <- objects level, enemyShip /= object && gameObjectType object /= Ship  && distance enemyShip object < d && doObjectsCollide enemyShip object == True]
     d = 0.4                -- range at which the enemy ships start to avoid the asteroids or other enemy ships
 
 closestFromList :: GameObject -> [GameObject] -> GameObject
@@ -71,7 +71,7 @@ tryToAvoid obj1 obj2 | facingAvoidingDirection obj1 obj2 == False = fastTurnInTh
                      | otherwise = UserInput 1 0
 
 speedTooFast :: GameObject -> Bool
-speedTooFast o = norm (velocity o) > 0.08
+speedTooFast o = norm (velocity o) > 0.1
 
 fastTurnInTheSpeedDirection :: GameObject -> UserInput
 fastTurnInTheSpeedDirection obj | rotateClockwiseToAim 0 0 (x (velocity obj)) (y (velocity obj)) (orienationAngle obj) == True = UserInput 0 (-3)

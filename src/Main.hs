@@ -20,8 +20,16 @@ import Generator
 
 -- iX stands for the initial value of X
 animateGameObject :: GameObject ->                             SF (Event CollisionCorrection, UserInput, GameLevel) GameObject
-animateGameObject iObject@(GameObject iLocation iVelocity iOrientation id gameObjectType) = proc (collisionCorrection, userInput, lastLevel) -> do
-    let input = if gameObjectType == Ship then userInput else if gameObjectType == EnemyShip then aim id lastLevel else rotateAsteroid gameObjectType
+animateGameObject (GameObject iLocation iVelocity iOrientation id Ship) = proc (collisionCorrection, userInput, lastLevel) -> do
+    let input = userInput
+    orientation      <- (iOrientation+) ^<< integral -< turn input
+    let acc = acceleration input *^ Vector (-sin orientation) (cos orientation)
+    velocity         <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
+    preTorusLocation <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collisionCorrection)
+    let location = torusfy preTorusLocation
+    returnA          -< GameObject location velocity orientation id Ship
+animateGameObject (GameObject iLocation iVelocity iOrientation id gameObjectType) = proc (collisionCorrection, userInput, lastLevel) -> do
+    let input = if gameObjectType == EnemyShip then aim id lastLevel else rotateAsteroid gameObjectType
     orientation      <- (iOrientation+) ^<< integral -< turn input
     let acc = acceleration input *^ Vector (-sin orientation) (cos orientation)
     velocity         <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collisionCorrection)
@@ -85,11 +93,12 @@ main    = do
     time <- newIORef t
     startTime <- newIORef t
     level <- generateLevel 5 10
+    gameState <- newIORef $ GameState 1 3 0 100 False
     resetTriggered <- newIORef False
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
-    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
+    keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window gameState resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
     idleCallback $= Just (idle input time handle)
-    displayCallback $= (drawScreen output startTime)
+    displayCallback $= (drawScreen gameState output startTime)
     mainLoop
 
 idle :: IORef UserInput -> IORef UTCTime -> ReactHandle UserInput GameLevel -> IO()

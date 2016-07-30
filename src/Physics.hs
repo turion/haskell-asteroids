@@ -16,7 +16,7 @@ import FRP.Yampa.Event
 
 radius :: GameObjectType -> GLfloat
 radius (Asteroid scale shape _)   = scale * (longestEdge shape)
-radius Ship                 = 0.05
+radius Ship              = 0.05
 radius EnemyShip            = 0.05
 radius Projectile           = 0.02
 radius EnemyProjectile      = 0.02

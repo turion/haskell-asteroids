@@ -28,12 +28,24 @@ data OtherButtons = OtherButtons {
   reset :: Bool
 }
 
-handleInput :: Window -> IORef Bool -> IORef UserInput -> Event KeyboardInput -> IO ()
-handleInput    window     _   _           (Event (KeyboardInput (Char 'q') (Down) _))  = destroyWindow window
-handleInput    window    resetTriggered _               (Event (KeyboardInput (Char 'r') (Down) _))  = do
+handleInput :: Window -> IORef GameState -> IORef Bool -> IORef UserInput -> Event KeyboardInput -> IO ()
+handleInput    window    _ _   _           (Event (KeyboardInput (Char 'q') (Down) _))  = destroyWindow window
+handleInput    window    _ resetTriggered _               (Event (KeyboardInput (Char 'r') (Down) _))  = do
   writeIORef resetTriggered True
   return ()
-handleInput    _ _      gameInput       userInput        = do
+handleInput    window  gameState  _ _                (Event (KeyboardInput (Char ' ') (Down) _))  = do
+  gs <- readIORef gameState
+  let newShield | shields gs - 20 < 0 = 0
+                | otherwise = shields gs - 20
+  let isShieldOn | newShield == 0 = False
+                 | otherwise = True
+  writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) newShield isShieldOn
+  return ()
+handleInput    window  gameState  _ _                (Event (KeyboardInput (Char ' ') (Up) _))  = do
+  gs <- readIORef gameState
+  writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) (shields gs) False
+  return ()
+handleInput    _ _  _    gameInput       userInput        = do
     oldInput <- readIORef gameInput
     writeIORef gameInput $ UserInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
     return ()

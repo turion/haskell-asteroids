@@ -6,6 +6,7 @@ import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import Control.Monad
 import System.Random
+--import Control.Monad.Random.Class
 
 import Datatypes
 import Physics
@@ -16,7 +17,7 @@ generateLevel enemyAmount asteroidAmount = do
   return $ GameLevel objects
 
 generateSeveralObjects :: Int -> Int -> IO [GameObject]
-generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 0 Ship]
+generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 0 Ship ]
 generateSeveralObjects 0 asteroids = do
   rest <- generateSeveralObjects 0 (asteroids - 1)
   first <- generateGameObject (Asteroid 1.0 (Shape []) 0) rest
@@ -68,3 +69,6 @@ generateAsteroidShape = do
     p7 = Vector (-r7) 0
     p8 = Vector (-r8) r8
   return $ Shape [p1, p2, p3, p4, p5, p6, p7, p8]
+
+{-die :: (RandomGen g) => Rand g Int
+die = getRandomR (1,6)-}

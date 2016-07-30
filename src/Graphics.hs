@@ -48,56 +48,73 @@ drawPolygon    (r, g, b)                      points = do
         drawPoints points where
             drawPoints []              = do return ()
             drawPoints ((x, y):others) = do
-                vertex $ (Vertex3   x    y  0)
+                vertex $ Vertex2 x y
                 drawPoints others
+
+drawCircle :: (GLfloat, GLfloat, GLfloat) -> [(GLfloat, GLfloat)] -> IO ()
+drawCircle    (r, g, b)                      points = do
+    color $ Color3 r g b
+    renderPrimitive LineLoop $ do
+        drawPoints points where
+            drawPoints []              = do return ()
+            drawPoints ((x, y):others) = do
+                vertex $ Vertex2 x y
+                drawPoints others
+
+circle :: GLfloat -> [(GLfloat, GLfloat)]
+circle r = [(r * sin(a * pi / 180), r * cos(a * pi / 180)) | a <- [0..360]]
 
 
 -- Game functions: drawGameObjectType, drawGameObject, drawListOfGameObjects, drawGameLevel --
 
-drawGameObjectType :: GameObjectType -> IO ()
-drawGameObjectType Ship = do
+drawGameObjectType :: GameObjectType -> IORef GameState -> IO ()
+drawGameObjectType Ship gameState = do
+    state <- readIORef gameState
     drawPolygon (1.0, 1.0, 1.0) [( 0.000,  0.050),
                                  ( 0.050, -0.050),
                                  ( 0.000, -0.025),
                                  (-0.050, -0.050)]
-drawGameObjectType EnemyShip = do
+    if (shieldOn state)==True then do
+      drawCircle (0.1, 0.9, 0.9) $ circle 0.07
+      drawCircle (0.1, 0.2, 0.8) $ circle 0.068
+      drawCircle (0.1, 0.1, 0.7) $ circle 0.066
+    else return ()
+drawGameObjectType EnemyShip _ = do
     drawPolygon (1.0, 0.0, 0.0) [( 0.000,  0.050),
                                  ( 0.050, -0.050),
                                  ( 0.000, -0.025),
                                  (-0.050, -0.050)]
-drawGameObjectType (Asteroid s (Shape shape) _)= do
+drawGameObjectType (Asteroid s (Shape shape) _) _= do
     scale s s s
     drawPolygon (0.4, 0.4, 0.4) [(x vector, y vector) | vector <- shape]
-drawGameObjectType Projectile = do
+drawGameObjectType Projectile _ = do
     drawPolygon (0.0, 1.0, 0.0) [( 0.005,  0.020),
                                  ( 0.005, -0.020),
                                  (-0.005, -0.020),
                                  (-0.005,  0.020)]
-drawGameObjectType EnemyProjectile = do
+drawGameObjectType EnemyProjectile _ = do
     drawPolygon (1.0, 0.3, 0.3) [( 0.005,  0.020),
                                  ( 0.005, -0.020),
                                  (-0.005, -0.020),
                                  (-0.005,  0.020)]
 
-drawGameObject ::   GameObject ->   IO ()
-drawGameObject      GameObject { location = location, orientation = orientation, gameObjectType = gameObjectType}     = do
+drawGameObject ::   GameObject -> IORef GameState ->  IO ()
+drawGameObject  GameObject { location = location, orientation = orientation, gameObjectType = gameObjectType} gameState = do
     preservingMatrix $ do
-
         translate $ Vector3 (x location) (y location) 0
         rotate (orientation * 360 / (2 * pi)) $ Vector3 0 0 1       --degree or radians?
-        drawGameObjectType gameObjectType
+        drawGameObjectType gameObjectType gameState
 
-drawScreen :: IORef GameLevel -> IORef UTCTime -> IO ()
-drawScreen gameLevel startTime = do
+drawScreen :: IORef GameState -> IORef GameLevel -> IORef UTCTime -> IO ()
+drawScreen gameState gameLevel startTime = do
   clear[ColorBuffer]
   ilevel <- readIORef gameLevel
-  let start = GameState 1 3 0
-  renderLevel ilevel
-  showGameState start startTime
+  renderLevel ilevel gameState
+  showGameState gameState startTime
 
-renderLevel :: GameLevel -> IO ()
-renderLevel (GameLevel objects) = preservingMatrix $ do
-     mapM_ drawGameObject objects
+renderLevel :: GameLevel -> IORef GameState -> IO ()
+renderLevel (GameLevel objects) gameState = preservingMatrix $ do
+     mapM (\x -> drawGameObject x gameState) objects
      drawBorder
 
 drawBorder :: IO ()
@@ -128,9 +145,14 @@ showText text (Vector x y) fontColors s Regular= preservingMatrix $ do
   renderString Roman text
   swapBuffers
 
-showGameState :: GameState -> IORef UTCTime -> IO()
-showGameState (GameState {level = l, lifeCount = lc, score = s}) startTime  = do
+showGameState :: IORef GameState -> IORef UTCTime -> IO()
+showGameState gameState startTime  = do
   now <- getCurrentTime
+  gs <- readIORef gameState
+  let newShields | shields gs + 1 > 100 = 100
+                 | shieldOn gs == True = shields gs
+                 | otherwise = shields gs + 1
+  writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) newShields (shieldOn gs)
   before <- readIORef startTime
   let deltaTime = realToFrac $ diffUTCTime now before
-  showText ("Lives: " ++ show lc ++ "   Level " ++ show l ++ "   Score: " ++ show s ++ "   Time: " ++ show deltaTime) (Vector (-0.85) (0.9)) [0.4, 0.8, 0.4] 0.0005 Regular
+  showText ("Lives: " ++ show (lifeCount gs) ++ " Level " ++ show (level gs) ++ " Score: " ++ show (score gs) ++ " Shields:" ++ show (shields gs) ++ " Time: " ++ show deltaTime) (Vector (-0.92) (0.9)) [0.4, 0.8, 0.4] 0.0005 Regular
