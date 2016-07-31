@@ -35,17 +35,20 @@ handleInput    window    _ resetTriggered _               (Event (KeyboardInput 
   return ()
 handleInput    window  gameState  _ _                (Event (KeyboardInput (Char ' ') (Down) _))  = do
   gs <- readIORef gameState
-  let newShield | shields gs - 20 < 0 = 0
-                | otherwise = shields gs - 20
-  let isShieldOn | newShield == 0 = False
-                 | otherwise = True
+  let newShield | shields gs - 100 < 0 = 0
+                | otherwise = shields gs - 100
+  let isShieldOn | newShield > 400 && shieldOn gs == False = True
+                 | shieldOn gs == True && newShield > 0 = True
+                 | otherwise = False
   writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) newShield isShieldOn
   return ()
 handleInput    window  gameState  _ _                (Event (KeyboardInput (Char ' ') (Up) _))  = do
   gs <- readIORef gameState
   writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) (shields gs) False
   return ()
-handleInput    _ _  _    gameInput       userInput        = do
+handleInput   _ gameState  _    gameInput       userInput        = do
+    gs <- readIORef gameState
+    writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) (shields gs) False
     oldInput <- readIORef gameInput
     writeIORef gameInput $ UserInput (parseAcceleration oldInput userInput) (parseOrientation oldInput userInput)
     return ()

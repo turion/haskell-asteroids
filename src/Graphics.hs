@@ -72,7 +72,10 @@ drawGameObjectType Ship gameState = do
     drawPolygon (0.1, 0.3, 0.9) $ getWindowForm shipSize
     drawPolygon (0.1, 0.6, 0.2) $ getRightWingForm shipSize
     drawPolygon (0.1, 0.6, 0.2) $ getLeftWingForm shipSize
-    if (shieldOn state)==True then do
+    if (shields state < 500) == True && (shieldOn state) == False then do
+      drawPolygon (0.9, 0.2, 0.2) $ getLightningForm (shipSize * 2)
+    else return ()
+    if (shieldOn state) == True then do
       drawCircle (0.1, 0.9, 0.9) $ circle (shipSize - 0.005)
       drawCircle (0.1, 0.2, 0.8) $ circle (shipSize - 0.007)
       drawCircle (0.1, 0.1, 0.7) $ circle (shipSize - 0.009)
@@ -151,13 +154,13 @@ showGameState :: IORef GameState -> IORef UTCTime -> IO()
 showGameState gameState startTime  = do
   now <- getCurrentTime
   gs <- readIORef gameState
-  let newShields | shields gs + 1 > 100 = 100
+  let newShields | shields gs + 1 > 1000 = 1000
                  | shieldOn gs == True = shields gs
-                 | otherwise = shields gs + 1
+                 | otherwise = shields gs + 2
   writeIORef gameState $ GameState (level gs) (lifeCount gs) (score gs) newShields (shieldOn gs)
   before <- readIORef startTime
   let deltaTime = realToFrac $ diffUTCTime now before
-  showText ("Lives: " ++ show (lifeCount gs) ++ " Level " ++ show (level gs) ++ " Score: " ++ show (score gs) ++ " Shields:" ++ show (shields gs) ++ " Time: " ++ show deltaTime) (Vector (-0.92) (0.9)) [0.4, 0.8, 0.4] 0.0005 Regular
+  showText ("Lives: " ++ show (lifeCount gs) ++ "   Level " ++ show (level gs) ++ "   Score: " ++ show (score gs) ++ "   Time: " ++ show deltaTime) (Vector (-0.85) (0.9)) [0.4, 0.8, 0.4] 0.0005 Regular
 
 getShipForm :: GLfloat -> [(GLfloat, GLfloat)]
 getShipForm s = recalculateCoords s $ copyAndReverse [(200,50), (210, 60), (215, 45), (230, 100), (245, 80), (245, 160), (345, 260), (350, 245), (350, 300), (250, 300), (240, 335), (210, 335), (200, 300)]
@@ -191,6 +194,9 @@ getLeftWingEnemyColorForm s = recalculateCoords s [(98, 190), (62, 200), (62, 24
 
 recalculateCoords :: GLfloat -> [(GLfloat, GLfloat)] -> [(GLfloat, GLfloat)]
 recalculateCoords s list = [ ((x - 200) * s/200, -(y - 200) * s/200) | (x, y) <- list]
+
+getLightningForm :: GLfloat -> [(GLfloat, GLfloat)]
+getLightningForm s = recalculateCoords s [(255, 125), (253, 128), (240, 130), (270, 95), (256, 123), (270, 120), (240, 160)]
 
 copyAndReverse :: [(GLfloat, GLfloat)] -> [(GLfloat, GLfloat)]
 copyAndReverse list = reversedList ++ list

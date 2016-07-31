@@ -93,7 +93,7 @@ main    = do
     time <- newIORef t
     startTime <- newIORef t
     level <- generateLevel 5 8
-    gameState <- newIORef $ GameState 1 3 0 100 False
+    gameState <- newIORef $ GameState 1 3 0 1000 False
     resetTriggered <- newIORef False
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
     keyboardMouseCallback $= Just (\key keyState modifiers _ -> handleInput window gameState resetTriggered input $ Event $ KeyboardInput key keyState modifiers)
