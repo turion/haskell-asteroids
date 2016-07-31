@@ -17,6 +17,7 @@ import AI
 import Graphics
 import Physics
 import Generator
+import System.Random
 
 -- iX stands for the initial value of X
 animateGameObject :: GameObject ->                             SF (Event CollisionCorrection, UserInput, GameLevel) GameObject
@@ -92,7 +93,8 @@ main    = do
     t <- getCurrentTime
     time <- newIORef t
     startTime <- newIORef t
-    level <- generateLevel 5 8
+    randomGenerator <- getStdGen
+    let level = generateLevel 5 10 randomGenerator
     gameState <- newIORef $ GameState 1 3 0 1000 False
     resetTriggered <- newIORef False
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
