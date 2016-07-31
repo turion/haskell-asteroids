@@ -45,7 +45,7 @@ aim enemyShipId level | speedTooFast enemyShip && facingSpeedDirection enemyShip
       y2 = y (location enemyShip)
       ( ship:_) = [ object | object <- objects level, (gameObjectType object) == Ship ]
       ( enemyShip:_) = [ object | object <- objects level, objectId object == enemyShipId  ]
-      approachingSpeed = 0.05              -- make it higher (about 0.05) to make the asteroids try to ram the ship
+      approachingSpeed = 0              -- make it higher (about 0.05) to make the asteroids try to ram the ship
 
 approachingObject :: GameObject -> GameLevel -> [GameObject]
 approachingObject enemyShip level | length closeObjects > 0 = [closestFromList enemyShip closeObjects]

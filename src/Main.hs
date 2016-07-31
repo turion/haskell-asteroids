@@ -92,7 +92,7 @@ main    = do
     t <- getCurrentTime
     time <- newIORef t
     startTime <- newIORef t
-    level <- generateLevel 5 10
+    level <- generateLevel 5 8
     gameState <- newIORef $ GameState 1 3 0 100 False
     resetTriggered <- newIORef False
     handle <- reactInit (return (UserInput 0.0 0.0)) (actuator output) $ game level
