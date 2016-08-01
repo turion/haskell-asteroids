@@ -15,11 +15,16 @@ import FRP.Yampa.Event
 -- Collisions
 
 radius :: GameObjectType -> GLfloat
-radius (Asteroid scale _ _)   = scale * 0.05 -- TODO make dependent on shape
-radius Ship                 = 0.05
+radius (Asteroid scale shape _)   = scale * (longestEdge shape)
+radius Ship              = 0.05
 radius EnemyShip            = 0.05
 radius Projectile           = 0.02
 radius EnemyProjectile      = 0.02
+
+longestEdge :: Shape -> GLfloat
+longestEdge shape = head (maximum [allEdges])
+  where
+    allEdges = [ norm vector | vector <- points shape]
 
 overlap :: GameObject -> GameObject -> Bool
 overlap    object        other
@@ -71,8 +76,8 @@ collide object other
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = radiusSum - distance
-        deltaL1 =    (correction ) *^ collisionNormal
-        deltaL2 = (-correction ) *^ collisionNormal
+        deltaL1 =    (correction * 4) *^ collisionNormal
+        deltaL2 = (-correction * 4) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
@@ -85,7 +90,7 @@ torusfy    (Vector x y)
     | y >  a = torusfy (Vector x (y - 2 * a))
     | otherwise = Vector x y
     where
-     a = 1.05
+      a = 1.04
 
 
 
