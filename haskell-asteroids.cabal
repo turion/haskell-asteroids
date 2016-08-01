@@ -72,9 +72,3 @@ executable haskell-asteroids
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
-
-executable test-screen
-  main-is: TestScreen.hs
-  build-depends:       base >=4.8 && <4.9, time, Yampa == 0.10.4, OpenGL == 2.13.1.0, GLUT == 2.7.0.3, haskell-asteroids, random
-  hs-source-dirs:      test
-  default-language:    Haskell2010
