@@ -12,6 +12,3 @@ Colors:
         Violet -> Color3 (1.0::GLfloat) 1.0 0.0
         Teal   -> Color3 (1.0::GLfloat) 0.0 1.0
         White  -> Color3 (1.0::GLfloat) 1.0 1.0
-
-To install FTGL:
-        https://noamlewis.wordpress.com/2012/12/16/cabal-install-ftgl-on-windows-and-getting-exes-that-use-it-to-work/
