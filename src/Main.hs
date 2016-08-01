@@ -75,15 +75,15 @@ collideWithAllOthers    object        others          = (corrections, explosions
 
 getExplosions :: [Event CollisionResult] ->                        ExplosionEvents
 getExplosions    []                                                = []
-getExplosions    (Event (Explosion (Circle center size)): results) = (Explosion (Circle center size): getExplosions results)
-getExplosions    (_ : results)                                     = (NoEvent : getExplosions results)
+getExplosions    (Event (Explosion (Circle center size)): results) = (Event (Circle center size): getExplosions results)
+getExplosions    (_: results)                                      = (NoEvent: getExplosions results)
 
 getCorrections :: [Event CollisionResult] ->                  (CorrectionEvents, CorrectionEvents)
 getCorrections    []                                          = ([], [])
-getCorrections    (Event (Correction (left, right)): results) = ((Event left : objectCorrections), (Event right, otherCorrections)) where
+getCorrections    (Event (Correction (left, right)): results) = ((Event left: objectCorrections), (Event right: otherCorrections)) where
     objectCorrections = fst (getCorrections results)
     otherCorrections = snd (getCorrections results)
-getCorrections    (_                             : results)   = ((NoEvent: objectCorrections), (NoEvent: otherCorrections)) where
+getCorrections    (_: results)                                = ((NoEvent: objectCorrections), (NoEvent: otherCorrections)) where
     objectCorrections = fst (getCorrections results)
     otherCorrections = snd (getCorrections results)
 
@@ -97,7 +97,7 @@ game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
     rec
         -- iLevel <- ioLevel
-        (correctionEvents, explosionEvents) <- iPre (noEvents iLevel)    -< collideAll level
+        (correctionEvents, explosionEvents) <- iPre ((noEvents iLevel), [])    -< collideAll level
         level  <- animateManyObjects iLevel -< (correctionEvents, input, lastLevel)
         lastLevel <- iPre (iLevel) -< level
     returnA -< level

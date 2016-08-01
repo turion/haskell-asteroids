@@ -43,8 +43,8 @@ overlapAny    object        (other:others)  = (overlap object other) || (overlap
 
 collide :: GameObject -> GameObject -> Event CollisionResult
 collide    object        other = case (gameObjectType object, gameObjectType other) of
-    (Asteroid _ _, Asteroid _ _) -> collideAsteroids object other
-    (_           , _           ) -> explodeObjects object other
+    (Asteroid _ _ _, Asteroid _ _ _) -> collideAsteroids object other
+    (_             , _             ) -> explodeObjects object other
 
 explodeObjects :: GameObject -> GameObject -> Event CollisionResult
 explodeObjects    object        other
@@ -57,7 +57,7 @@ explodeObjects    object        other
 
 collideAsteroids :: GameObject -> GameObject -> Event CollisionResult
 collideAsteroids object other
-    | overlap object other = (Event Correction (objectCollisionCorrection , otherCollisionCorrection))
+    | overlap object other = Event (Correction (objectCollisionCorrection , otherCollisionCorrection))
     | norm difference < 0.00000001 = NoEvent
     | otherwise            = NoEvent where
         -- calculate collision normal
