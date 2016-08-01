@@ -15,14 +15,19 @@ import FRP.Yampa.Event
 -- Collisions
 
 radius :: GameObjectType -> GLfloat
-radius (Asteroid scale _)   = scale * 0.05 -- TODO make dependent on shape
+radius (Asteroid scale shape _)   = scale * (longestEdge shape)
 radius Ship                 = 0.05
 radius EnemyShip            = 0.05
 radius Projectile           = 0.02
 radius EnemyProjectile      = 0.02
 
+longestEdge :: Shape -> GLfloat
+longestEdge shape = head (maximum [allEdges])
+  where
+    allEdges = [ norm vector | vector <- points shape]
+
 overlap :: GameObject -> GameObject -> Bool
-overlap    object        other         
+overlap    object        other
     | object == other = False
     | otherwise       = distance <= (r1 + r2) where
         distance = norm $ loc1 ^-^ loc2
@@ -52,7 +57,8 @@ explodeObjects    object        other
 
 collideAsteroids :: GameObject -> GameObject -> Event CollisionResult
 collideAsteroids object other
-    | overlap object other = Event (Correction (objectCollisionCorrection , otherCollisionCorrection))
+    | overlap object other = (Event Correction (objectCollisionCorrection , otherCollisionCorrection))
+    | norm difference < 0.00000001 = NoEvent
     | otherwise            = NoEvent where
         -- calculate collision normal
         difference = location object ^-^ location other
@@ -82,36 +88,38 @@ collideAsteroids object other
         distance = norm difference
         radiusSum = radius (gameObjectType object) + radius (gameObjectType other)
         correction = radiusSum - distance
-        deltaL1 =    correction *^ collisionNormal
-        deltaL2 = (-correction) *^ collisionNormal
+        deltaL1 =    (correction * 4) *^ collisionNormal
+        deltaL2 = (-correction * 4) *^ collisionNormal
 
         objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
 
 torusfy :: Location -> Location
 torusfy    (Vector x y)
-    | x < -1.1 = torusfy (Vector (x + 2.2) y)
-    | x >  1.1 = torusfy (Vector (x - 2.2) y)
-    | y < -1.1 = torusfy (Vector x (y + 2.2))
-    | y >  1.1 = torusfy (Vector x (y - 2.2))
+    | x < -a = torusfy (Vector (x + 2 * a) y)
+    | x >  a = torusfy (Vector (x - 2 * a) y)
+    | y < -a = torusfy (Vector x (y + 2 * a))
+    | y >  a = torusfy (Vector x (y - 2 * a))
     | otherwise = Vector x y
+    where
+      a = 1.04
 
 
 
--- Alternate Approach following the Yampa Arcade Paper: 
+-- Alternate Approach following the Yampa Arcade Paper:
 
 --  Game
---
+
 --data ObjectInput = ObjectInput{
 --    iHit :: Event (),
 --    iUserInput :: UserInput,
 --    iCollisionCorrection :: CollisionCorrection
 --}
---
+
 --data ObjectOutput = ObjectOutput{
 --    gameObject :: GameObject,
 --    killEvent :: Event (),
 --    spawnEvent :: Event [GameObject]
 --}
---
+
 --type Object = SF ObjectInput ObjectOutput

@@ -9,12 +9,14 @@ module Datatypes (
   GameObject(..),
   GameState(..),
   Shape(..),
-  Fonts,
   Location,
   Velocity,
   Acceleration,
   Orientation,
   Scale,
+  Rotation,
+  ID,
+  Shields,
   CollisionCorrection(..),
   Circle(..),
   CollisionResult(..)
@@ -23,24 +25,24 @@ module Datatypes (
 import Graphics.UI.GLUT
 import FRP.Yampa.VectorSpace
 import FRP.Yampa.Event
-import Graphics.Rendering.FTGL
 
 -- Basic types: Vector, GLfloat + types --
 
 data Vector = Vector {
-  x :: GLfloat,
-  y :: GLfloat
+    x :: GLfloat,
+    y :: GLfloat
 } deriving (Eq, Show)
 
 
 instance VectorSpace Vector GLfloat where
-  zeroVector = Vector 0 0
-  a *^ Vector x y = Vector (a*x) (a*y)
-  Vector x1 y1 ^+^ Vector x2 y2  = Vector (x1+x2) (y1+y2)
-  Vector x1 y1 `dot` Vector x2 y2 = x1*x2 + y1*y2
+    zeroVector = Vector 0 0
+    a *^ Vector x y = Vector (a*x) (a*y)
+    Vector x1 y1 ^+^ Vector x2 y2  = Vector (x1+x2) (y1+y2)
+    Vector x1 y1 ^-^ Vector x2 y2  = Vector (x1-x2) (y1-y2)
+    Vector x1 y1 `dot` Vector x2 y2 = x1*x2 + y1*y2
 
 data Shape = Shape {
-  points :: [Vector]
+    points :: [Vector]
 } deriving (Eq, Show)
 
 type Location = Vector
@@ -48,40 +50,45 @@ type Velocity = Vector
 type Acceleration = GLfloat
 type Orientation = GLfloat
 type Scale = GLfloat
+type Rotation = GLfloat
+type ID = Int
+type Shields = Bool
 
 instance VectorSpace Orientation GLfloat where
-  zeroVector = 0
-  (*^) = (*)
-  (^+^) = (+)
-  dot = (*)
+    zeroVector = 0
+    (*^) = (*)
+    (^+^) = (+)
+    (^-^) = (-)
+    dot = (*)
 
 -- Game types: GameObjectType, GameObject, GameLevel --
 
-data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape | Projectile | EnemyProjectile
+data GameObjectType = Ship | EnemyShip | Asteroid Scale Shape Rotation | Projectile | EnemyProjectile
    deriving (Eq, Show)
 
 data GameObject = GameObject {
-  location       :: Location,
-  velocity       :: Velocity,
-  orientation    :: Orientation,
-  gameObjectType :: GameObjectType
+    location :: Location,
+    velocity :: Velocity,
+    orientation :: Orientation,
+    objectId :: ID,
+    gameObjectType :: GameObjectType
 }  deriving (Eq, Show)
 
 data GameLevel = EmptyLevel | GameLevel {
-  objects :: [GameObject]
+    objects :: [GameObject]
 } deriving (Eq, Show)
 
 data GameState = GameState {
-  level     :: Integer,
-  lifeCount :: Integer,
-  score     :: Integer
+    level :: Integer,
+    lifeCount :: Integer,
+    score :: Integer,
+    shields :: Int,
+    shieldOn :: Bool
 }
 
-type Fonts = [Graphics.Rendering.FTGL.Font]
-
 data CollisionCorrection = CollisionCorrection {
-  deltaLocation :: Location,
-  deltaVelocity :: Velocity
+    deltaLocation :: Location,
+    deltaVelocity :: Velocity
 } deriving (Eq, Show)
 
 instance VectorSpace CollisionCorrection GLfloat where

@@ -10,53 +10,53 @@ import System.Random
 import Datatypes
 import Physics
 
-generateLevel :: Int -> Int -> IO GameLevel
-generateLevel enemyAmount asteroidAmount = do
-  objects <- generateSeveralObjects enemyAmount asteroidAmount
-  return $ GameLevel objects
+generateLevel :: Int -> Int -> StdGen -> GameLevel
+generateLevel enemyAmount asteroidAmount gen = GameLevel $ generateSeveralObjects enemyAmount asteroidAmount gen
 
-generateSeveralObjects :: Int -> Int -> IO [GameObject]
-generateSeveralObjects 0 0 = do return [GameObject (Vector 0 0) (Vector 0 0) 0 Ship]
-generateSeveralObjects 0 asteroids = do
-  rest <- generateSeveralObjects 0 (asteroids - 1)
-  first <- generateGameObject (Asteroid 1.0 (Shape [])) rest
-  return $ first:rest
-generateSeveralObjects enemies asteroids = do
-  rest <- generateSeveralObjects (enemies-1) asteroids
-  first <- generateGameObject EnemyShip rest
-  return $ first:rest
+generateSeveralObjects :: Int -> Int -> StdGen -> [GameObject]
+generateSeveralObjects 0 0 _ = [GameObject (Vector 0 0) (Vector 0 0) 0 0 Ship ]
+generateSeveralObjects 0 asteroids g = first:rest
+  where
+    rest = generateSeveralObjects 0 (asteroids - 1) g2
+    (first, g2) = generateGameObject (Asteroid 1.0 (Shape []) 0) rest g
+generateSeveralObjects enemies asteroids g = first:rest
+  where
+    rest = generateSeveralObjects (enemies-1) asteroids g2
+    (first, g2) = generateGameObject EnemyShip rest g
 
-generateGameObject :: GameObjectType -> [GameObject] -> IO GameObject
-generateGameObject objType objects = do
-  randomRadius <- ([1.0, 1.5, 2.0] !!) <$> randomRIO(0,2)
-  let velocityRange = 0.03
-  x <- randomIO
-  y <- randomIO
-  o <- randomIO
-  v1 <- randomRIO (-velocityRange, velocityRange)
-  v2 <- randomRIO (-velocityRange, velocityRange)
-  randomShape <- generateAsteroidShape
-  let newObjectType | objType == EnemyShip = objType
-                    | otherwise = Asteroid randomRadius randomShape
-  let newObject = GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) (Vector v1 v2) (o*360) newObjectType
-  if not (overlapAny newObject objects)
-    then return newObject
-    else generateGameObject newObjectType objects
+generateGameObject :: GameObjectType -> [GameObject] -> StdGen -> (GameObject, StdGen)
+generateGameObject objType objects g = (GameObject (Vector (x*1.9-0.95) (y*1.9-0.95)) velocity (o*2*pi) (length objects) newObjectType, gLast)
+  where
+    (x, g2) = rand g
+    (y, g3) = rand g2
+    (vx, g4) = rand g3
+    (vy, g5) = rand g4
+    (o, g6) = rand g5
+    (r, g7) = rand g6
+    (randomRotation, g8) = rand g7
+    (randomShape, gLast) = generateAsteroidShape g8
+    randomRadius | r <= 0.33 = 1.0
+                 | r <= 0.66 = 1.5
+                 | otherwise = 2.0
+    newObjectType | objType == EnemyShip = objType
+                  | otherwise = Asteroid randomRadius randomShape (2 * randomRotation - randomRotation)
+    velocityRange = 0.03
+    rotationRange = 0.8
+    velocity = Vector (vx * 2 * velocityRange - velocityRange) (vy * 2 * velocityRange - velocityRange)
 
-generateAsteroidShape :: IO Shape
-generateAsteroidShape = do
-  let
+generateAsteroidShape :: StdGen -> (Shape, StdGen)
+generateAsteroidShape g = (Shape [p1, p2, p3, p4, p5, p6, p7, p8], gLast)
+  where
     a = 0.013
     b = 0.01
-  r1 <- randomRIO (2*a, 3*a)
-  r2 <- randomRIO (2*b, 3*b)
-  r3 <- randomRIO (2*a, 3*a)
-  r4 <- randomRIO (2*b, 3*b)
-  r5 <- randomRIO (2*a, 3*a)
-  r6 <- randomRIO (2*b, 3*b)
-  r7 <- randomRIO (2*a, 3*a)
-  r8 <- randomRIO (2*b, 3*b)
-  let
+    (r1, g1) = randomR (2*a, 3*a) g
+    (r2, g2) = randomR (2*b, 3*b) g1
+    (r3, g3) = randomR (2*a, 3*a) g2
+    (r4, g4) = randomR (2*b, 3*b) g3
+    (r5, g5) = randomR (2*a, 3*a) g4
+    (r6, g6) = randomR (2*b, 3*b) g5
+    (r7, g7) = randomR (2*a, 3*a) g6
+    (r8, gLast) = randomR (2*b, 3*b) g7
     p1 = Vector 0 r1
     p2 = Vector r2 r2
     p3 = Vector r3 0
@@ -65,4 +65,8 @@ generateAsteroidShape = do
     p6 = Vector (-r6) (-r6)
     p7 = Vector (-r7) 0
     p8 = Vector (-r8) r8
-  return $ Shape [p1, p2, p3, p4, p5, p6, p7, p8]
+
+rand :: StdGen -> (GLfloat , StdGen )
+rand g = random g :: (GLfloat , StdGen )
+
+
