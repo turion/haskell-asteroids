@@ -109,14 +109,17 @@ applyExplosions    level                        circle    = applyExplosions' lev
         radiiSum = (radius (gameObjectType object)) + circleRadius
 
 
-game :: GameLevel -> SF UserInput GameLevel
-game iLevel = proc (input) -> do
+unreducedGame :: GameLevel -> SF UserInput (GameLevel, Event (GameLevel, ExplosionEvents))
+unreducedGame iLevel = proc (input) -> do
     rec
         (correctionEvents, explosionEvents) <- iPre ((noEvents iLevel), [])    -< collideAll level
-        tmpLevel  <- animateManyObjects iLevel -< (correctionEvents, input, lastLevel)
+        level  <- animateManyObjects iLevel -< (correctionEvents, input, lastLevel)
         lastLevel <- iPre (iLevel) -< level
-    returnA -< level
+        let event = if length explosionEvents > 0 then Event (level, explosionEvents) else NoEvent
+    returnA -< (level, event)
 
+game :: GameLevel -> SF UserInput GameLevel
+game    iLevel       = unreducedGame iLevel `switch` (game . uncurry reduceLevel)
 -- Main
 
 main :: IO ()
