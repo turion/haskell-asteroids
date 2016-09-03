@@ -45,7 +45,7 @@ type ExplosionEvents = [Event Circle]
 animateManyObjects :: GameLevel ->                   SF (CorrectionEvents, UserInput, GameLevel) GameLevel
 animateManyObjects    (GameLevel [])                 = arr $ const $ GameLevel []
 animateManyObjects    (GameLevel (iObject:iObjects)) = proc ((event:events), input, lastLevel) -> do
-    object              <- animateGameObject iObject       -< (event, input, lastLevel)
+    object              <- animateGameObject iObject                 -< (event, input, lastLevel)
     (GameLevel objects) <- animateManyObjects (GameLevel (iObjects)) -< (events, input, lastLevel)
     returnA             -< GameLevel (object:objects)
 
@@ -57,9 +57,9 @@ collideAll    (GameLevel objects) = collideWithRest objects emptyEvents where
     collideWithRest    []               events                                = events
     collideWithRest    (object:objects) (collisions, explosions)              = (correctionEvents, explosionEvents) where
         (objectCorrections, objectExplosions) = collideWithAllOthers object objects
-        explosionEvents = objectExplosions ++ restExplosions
-        correctionEvents = parallelAdd [objectCorrections, (NoEvent : restCorrections)]
-        (restCorrections, restExplosions) = collideWithRest objects (objectCorrections, objectExplosions)
+        explosionEvents                       = objectExplosions ++ restExplosions
+        correctionEvents                      = parallelAdd [objectCorrections, (NoEvent : restCorrections)]
+        (restCorrections, restExplosions)     = collideWithRest objects (objectCorrections, objectExplosions)
 
 -- where for integers instead of Events, parallelAdd [[1,2,3,4,5,6], [6,5,4,3,2,1]] -> [7,7,7,7,7,7]
 parallelAdd :: [CorrectionEvents] -> CorrectionEvents
@@ -93,12 +93,27 @@ sumEvents                                    = foldl (^+^) NoEvent
 noEvents :: GameLevel -> CorrectionEvents
 noEvents = map (const NoEvent) . objects
 
+reduceLevel :: GameLevel -> ExplosionEvents ->           GameLevel
+reduceLevel    level        []                           = level
+reduceLevel    level        (NoEvent:explosions)         = reduceLevel level explosions
+reduceLevel    level        (Event explosion:explosions) = reduceLevel (applyExplosions level explosion) explosions
+
+applyExplosions :: GameLevel ->                 Circle -> GameLevel
+applyExplosions    level                        circle    = applyExplosions' level (GameLevel []) circle where
+    applyExplosions' :: GameLevel ->                 GameLevel ->       Circle ->                          GameLevel
+    applyExplosions'    (GameLevel [])               result             circle                             = result
+    applyExplosions'    (GameLevel (object:objects)) (GameLevel result) (Circle circleCenter circleRadius) = if distance > radiiSum
+        then applyExplosions' (GameLevel objects) (GameLevel (object:result)) circle
+        else applyExplosions' (GameLevel objects) (GameLevel result) circle where
+        distance = norm $ (location object) ^-^ circleCenter
+        radiiSum = (radius (gameObjectType object)) + circleRadius
+
+
 game :: GameLevel -> SF UserInput GameLevel
 game iLevel = proc (input) -> do
     rec
-        -- iLevel <- ioLevel
         (correctionEvents, explosionEvents) <- iPre ((noEvents iLevel), [])    -< collideAll level
-        level  <- animateManyObjects iLevel -< (correctionEvents, input, lastLevel)
+        tmpLevel  <- animateManyObjects iLevel -< (correctionEvents, input, lastLevel)
         lastLevel <- iPre (iLevel) -< level
     returnA -< level
 
