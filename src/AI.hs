@@ -34,10 +34,10 @@ closest l1 v1 l2 v2 =  ((v1 ^-^ v2) `dot` (l1 ^-^ l2)) / ((v1 ^-^ v2) `dot` (v1 
 
 aim :: ID -> GameLevel -> UserInput
 aim enemyShipId level | speedTooFast enemyShip && facingSpeedDirection enemyShip == False = fastTurnInTheSpeedDirection enemyShip
-                      | speedTooFast enemyShip && facingSpeedDirection enemyShip == True = UserInput (0.3) 0
+                      | speedTooFast enemyShip && facingSpeedDirection enemyShip == True = UserInput (0.3) 0 False
                       | length (approachingObject enemyShip level) > 0 = tryToAvoid enemyShip $ head $ approachingObject enemyShip level
-                      | rotateClockwiseToAim x1 y1 x2 y2 (orienationAngle enemyShip) == True = UserInput approachingSpeed (-1)
-                      | otherwise = UserInput approachingSpeed 1
+                      | rotateClockwiseToAim x1 y1 x2 y2 (orienationAngle enemyShip) == True = UserInput approachingSpeed (-1) False
+                      | otherwise = UserInput approachingSpeed 1 False
     where
       x1 = x (location ship)
       y1 = y (location ship)
@@ -63,23 +63,23 @@ distance :: GameObject -> GameObject -> GLfloat
 distance o1 o2 = norm ((location o1) ^-^ (location o2))
 
 rotateAsteroid :: GameObjectType -> UserInput
-rotateAsteroid (Asteroid s sh r) = UserInput 0.0 r
+rotateAsteroid (Asteroid s sh r) = UserInput 0.0 r False
 
 tryToAvoid :: GameObject -> GameObject -> UserInput
 tryToAvoid obj1 obj2 | facingAvoidingDirection obj1 obj2 == False = fastTurnInTheAvoidingDirection obj1 obj2
                      -- | facingAvoidingDirection obj1 obj2 == True = UserInput (0.6) 0
-                     | otherwise = UserInput 1 0
+                     | otherwise = UserInput 1 0 False
 
 speedTooFast :: GameObject -> Bool
 speedTooFast o = norm (velocity o) > 0.1
 
 fastTurnInTheSpeedDirection :: GameObject -> UserInput
-fastTurnInTheSpeedDirection obj | rotateClockwiseToAim 0 0 (x (velocity obj)) (y (velocity obj)) (orienationAngle obj) == True = UserInput 0 (-3)
-                                | otherwise = UserInput 0 3
+fastTurnInTheSpeedDirection obj | rotateClockwiseToAim 0 0 (x (velocity obj)) (y (velocity obj)) (orienationAngle obj) == True = UserInput 0 (-3) False
+                                | otherwise = UserInput 0 3 False
 
 fastTurnInTheAvoidingDirection :: GameObject -> GameObject -> UserInput
-fastTurnInTheAvoidingDirection obj1 obj2 | rotateClockwiseToAim (x (location obj2)) (y (location obj2)) (x (location obj1)) (y (location obj1)) (orienationAngle obj1) == True = UserInput 0 (5)
-                                         | otherwise = UserInput 0 (-5)
+fastTurnInTheAvoidingDirection obj1 obj2 | rotateClockwiseToAim (x (location obj2)) (y (location obj2)) (x (location obj1)) (y (location obj1)) (orienationAngle obj1) == True = UserInput 0 (5) False
+                                         | otherwise = UserInput 0 (-5) False
 
 facingSpeedDirection :: GameObject -> Bool
 facingSpeedDirection obj = (velocityAngle + angleRange) > o && (velocityAngle - angleRange) < o

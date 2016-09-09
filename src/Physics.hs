@@ -1,5 +1,6 @@
 module Physics (
     radius,
+    getProjectileLocation,
     collide,
     overlap,
     overlapAny,
@@ -14,12 +15,19 @@ import FRP.Yampa.Event
 
 -- Collisions
 
-radius :: GameObjectType -> GLfloat
+radius :: GameObjectType ->       GLfloat
 radius (Asteroid scale shape _)   = scale * (longestEdge shape)
-radius Ship                 = 0.05
-radius EnemyShip            = 0.05
-radius Projectile           = 0.02
-radius EnemyProjectile      = 0.02
+radius Ship                       = 0.05
+radius EnemyShip                  = 0.05
+radius Projectile                 = 0.02
+radius EnemyProjectile            = 0.02
+
+getProjectileLocation :: GameObject -> Location
+getProjectileLocation ship             = shipLocation ^+^ offset where
+    shipLocation = location ship
+    offset =  Vector (cos(angle) * distance) (sin(angle) * distance)
+    distance = (radius Projectile + 0.05 + radius (gameObjectType ship))
+    angle = orientation ship
 
 longestEdge :: Shape -> GLfloat
 longestEdge shape = head (maximum [allEdges])
@@ -48,7 +56,7 @@ collide    object        other = case (gameObjectType object, gameObjectType oth
 
 explodeObjects :: GameObject -> GameObject -> Event CollisionResult
 explodeObjects    object        other
-    | overlap object other = Event (Explosion (Circle center size))
+    | overlap object other = Event (Reduction (Explosion center size))
     | otherwise            = NoEvent where
         difference = location object ^-^ location other
         center = location object ^+^ ((-0.5) *^ difference)
