@@ -111,23 +111,3 @@ torusfy    (Vector x y)
     | otherwise = Vector x y
     where
       a = 1.04
-
-
-
--- Alternate Approach following the Yampa Arcade Paper:
-
---  Game
-
---data ObjectInput = ObjectInput{
---    iHit :: Event (),
---    iUserInput :: UserInput,
---    iCollisionCorrection :: CollisionCorrection
---}
-
---data ObjectOutput = ObjectOutput{
---    gameObject :: GameObject,
---    killEvent :: Event (),
---    spawnEvent :: Event [GameObject]
---}
-
---type Object = SF ObjectInput ObjectOutput
