@@ -30,7 +30,7 @@ main    = do
     fullScreen
     reshapeCallback $= Just reshape
     showText "Haskelloids" (Vector (-0.55) 0) [0.5, 0.0, 0.5] 0.002 Title
-    threadDelay 2000000
+    threadDelay 1000000
     t <- getCurrentTime
     time <- newIORef t
     startTime <- newIORef t

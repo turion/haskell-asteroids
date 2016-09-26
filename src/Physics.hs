@@ -99,7 +99,7 @@ collideAsteroids object other
         deltaL1 =    (correction * 4) *^ collisionNormal
         deltaL2 = (-correction * 4) *^ collisionNormal
 
-        objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
+        objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
 
 torusfy :: Location -> Location
