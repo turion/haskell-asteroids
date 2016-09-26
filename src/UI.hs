@@ -70,5 +70,5 @@ parseOrientation    oldInput     _                                              
 
 
 parseFire :: UserInput -> Event KeyboardInput ->                         Bool
-parseFire    _            (Event (KeyboardInput (Char 'b') (Up)   _)) =  True
+--parseFire    _            (Event (KeyboardInput (Char 'b') (Up)   _)) =  True
 parseFire    oldInput     _                                           =  False
