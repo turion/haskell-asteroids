@@ -1,5 +1,6 @@
 module Physics (
     radius,
+    getProjectileLocation,
     collide,
     overlap,
     overlapAny,
@@ -14,12 +15,19 @@ import FRP.Yampa.Event
 
 -- Collisions
 
-radius :: GameObjectType -> GLfloat
+radius :: GameObjectType ->       GLfloat
 radius (Asteroid scale shape _)   = scale * (longestEdge shape)
-radius Ship              = 0.05
-radius EnemyShip            = 0.05
-radius Projectile           = 0.02
-radius EnemyProjectile      = 0.02
+radius Ship                       = 0.05
+radius EnemyShip                  = 0.05
+radius Projectile                 = 0.02
+radius EnemyProjectile            = 0.02
+
+getProjectileLocation :: GameObject -> Location
+getProjectileLocation ship             = shipLocation ^+^ offset where
+    shipLocation = location ship
+    offset =  Vector (cos(angle) * distance) (sin(angle) * distance)
+    distance = (radius Projectile + 0.05 + radius (gameObjectType ship))
+    angle = orientation ship
 
 longestEdge :: Shape -> GLfloat
 longestEdge shape = head (maximum [allEdges])
@@ -41,11 +49,25 @@ overlapAny    object        []              = False
 overlapAny    object        (other:[])      = overlap object other
 overlapAny    object        (other:others)  = (overlap object other) || (overlapAny object others)
 
-collide :: GameObject -> GameObject -> (Event CollisionCorrection, Event CollisionCorrection)
-collide object other 
-    | overlapAny object [other] = (Event objectCollisionCorrection , Event otherCollisionCorrection)
-    | norm difference < 0.00000001 = (NoEvent, NoEvent)
-    | otherwise            = (NoEvent, NoEvent) where
+collide :: GameObject -> GameObject -> Event CollisionResult
+collide    object        other = case (gameObjectType object, gameObjectType other) of
+    (Asteroid _ _ _, Asteroid _ _ _) -> collideAsteroids object other
+    (_             , _             ) -> explodeObjects object other
+
+explodeObjects :: GameObject -> GameObject -> Event CollisionResult
+explodeObjects    object        other
+    | overlap object other = Event (Reduction (Explosion center size))
+    | otherwise            = NoEvent where
+        difference = location object ^-^ location other
+        center = location object ^+^ ((-0.5) *^ difference)
+        size = 0.1
+
+
+collideAsteroids :: GameObject -> GameObject -> Event CollisionResult
+collideAsteroids object other
+    | overlap object other = Event (Correction (objectCollisionCorrection , otherCollisionCorrection))
+    | norm difference < 0.00000001 = NoEvent
+    | otherwise            = NoEvent where
         -- calculate collision normal
         difference = location object ^-^ location other
         collisionNormal = FRP.Yampa.VectorSpace.normalize difference
@@ -63,9 +85,7 @@ collide object other
         v2Remaining = v2 ^-^ v2Colliding
 
         -- calculate results of the actually colliding parts via an inelastic collision
-        --v1PostCollision = v2Colliding ^-^ v1Colliding
         v1PostCollision = v2Colliding ^-^ v1
-        --v2PostCollision = v1Colliding ^-^ v2Colliding
         v2PostCollision = v1Colliding ^-^ v2
 
         -- add the remaining velocities not involved in the collision
@@ -111,52 +131,3 @@ torusfy    (Vector x y)
 --}
 
 --type Object = SF ObjectInput ObjectOutput
-
---object :: GameObject ->               Object
---object (GameObject iLocation iVelocity iOrientation gameObjectType) = proc (ObjectInput hit userInput, collisionCorrection) -> do
---    orientation <- (iOrientation+) ^<< integral -< turn userInput
---    let acc = acceleration userInput *^ Vector (-sin orientation) (cos orientation)
---    velocity    <- (iVelocity ^+^) ^<< impulseIntegral -< (acc, deltaVelocity <$> collision_correction)
---    location    <- (iLocation ^+^) ^<< impulseIntegral -< (velocity, deltaLocation <$> collision_correction)
---    die         <- edge                                -< hit
---    returnA -<
---        -- depending on the object type, return different values
---        ObjectOutput {
---            gameObject = GameObject location velocity orientation gameObjectType,
---            killEvent = die,
---            spawnEvent =
---                fire ‘tag‘
---                [GameObject location (2 *^ velocity) orientation Projectile]
---        }
-
---gameCore :: IL Object -> SF (UserInput, IL ObjectOutput) (IL ObjectOutput)
---gameCore objs =
---    dpSwitch route
---    objs
---    (arr killOrSpawn >>> notYet)
---    (\sfs’ f -> gameCore (f sfs’))
-
---route :: (UserInput, IL ObjOutput) -> IL sf -> IL (ObjInput, sf)
---route    (userInput, outputs)         objectss     = mapIL routeAux objects where
---    routeAux (id, object) =
---        (ObjectInput {
---            iHit =  if id ‘elem‘ hits
---                    then Event ()
---                    else noEvent,
---            iUserInput = userInput,
---            iCollisionCorrection = ?
---        }, object)
---    hits = collisions (assocsIL (fmap gameObject outputs))
-
-
----- todo
---killOrSpawn :: (a, IL ObjectOutput) -> (Event (IL Object->IL Object))
---killOrSpawn    (_, outputs) = foldl (mergeBy (.)) noEvent es where
---    es :: [Event (IL Object -> IL Object)]
---    es = [ mergeBy (.)
---            (killEvent oo
---            ‘tag‘ (deleteIL k))
---            (fmap (foldl (.) id
---            . map insertIL_)
---            (spawnEvent oo))
---         | (k,oo) <- assocsIL outputs ]

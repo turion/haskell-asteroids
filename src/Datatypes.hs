@@ -17,7 +17,10 @@ module Datatypes (
   Rotation,
   ID,
   Shields,
-  CollisionCorrection(..)
+  CollisionCorrection(..),
+  Explosion(..),
+  Fire(..),
+  CollisionResult(..)
   ) where
 
 import Graphics.UI.GLUT
@@ -108,3 +111,13 @@ instance (VectorSpace v a) => VectorSpace (Event v) a where
     Event v `dot` NoEvent = 0
     Event v `dot` Event w = v `dot` w
 
+data Explosion = Explosion {
+    explosionCenter :: Location,
+    explosionRadius :: GLfloat
+}
+
+data Fire = Fire {
+    fireValue :: Bool
+} deriving Eq
+
+data CollisionResult = Correction (CollisionCorrection, CollisionCorrection) | Reduction Explosion
