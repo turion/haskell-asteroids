@@ -99,7 +99,7 @@ collideAsteroids object other
         deltaL1 =    (correction * 4) *^ collisionNormal
         deltaL2 = (-correction * 4) *^ collisionNormal
 
-        objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1 
+        objectCollisionCorrection = CollisionCorrection deltaL1 deltaV1
         otherCollisionCorrection = CollisionCorrection deltaL2 deltaV2
 
 torusfy :: Location -> Location
@@ -111,23 +111,3 @@ torusfy    (Vector x y)
     | otherwise = Vector x y
     where
       a = 1.04
-
-
-
--- Alternate Approach following the Yampa Arcade Paper:
-
---  Game
-
---data ObjectInput = ObjectInput{
---    iHit :: Event (),
---    iUserInput :: UserInput,
---    iCollisionCorrection :: CollisionCorrection
---}
-
---data ObjectOutput = ObjectOutput{
---    gameObject :: GameObject,
---    killEvent :: Event (),
---    spawnEvent :: Event [GameObject]
---}
-
---type Object = SF ObjectInput ObjectOutput

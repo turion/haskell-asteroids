@@ -22,7 +22,7 @@ game    iLevel       = gameLoop iLevel `switch` (game . uncurry3 applyEvents)
 gameLoop :: GameLevel -> SF UserInput (GameLevel, Event (GameLevel, ExplosionEvents, FireEvent))
 gameLoop iLevel = proc (input) -> do
     rec
-        (correctionEvents, explosionEvents) <- iPre ((noEvents iLevel), [])    -< collideAll level
+        (correctionEvents, explosionEvents) <- iPre ((noEvents iLevel), []) -< collideAll level
         level  <- animateManyObjects iLevel -< (correctionEvents, input, lastLevel)
         lastLevel <- iPre (iLevel) -< level
         let fireEvent = if fire input then Event (Fire True) else NoEvent
