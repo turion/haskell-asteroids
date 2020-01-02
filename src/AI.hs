@@ -33,19 +33,22 @@ closest :: Location -> Velocity -> Location -> Velocity -> GLfloat
 closest l1 v1 l2 v2 =  ((v1 ^-^ v2) `dot` (l1 ^-^ l2)) / ((v1 ^-^ v2) `dot` (v1 ^-^ v2))
 
 aim :: ID -> GameLevel -> UserInput
-aim enemyShipId level | speedTooFast enemyShip && facingSpeedDirection enemyShip == False = fastTurnInTheSpeedDirection enemyShip
+aim enemyShipId level | ship == [] = UserInput 0 0 False
+                      | speedTooFast enemyShip && facingSpeedDirection enemyShip == False = fastTurnInTheSpeedDirection enemyShip
                       | speedTooFast enemyShip && facingSpeedDirection enemyShip == True = UserInput (0.3) 0 False
                       | length (approachingObject enemyShip level) > 0 = tryToAvoid enemyShip $ head $ approachingObject enemyShip level
                       | rotateClockwiseToAim x1 y1 x2 y2 (orienationAngle enemyShip) == True = UserInput approachingSpeed (-1) False
                       | otherwise = UserInput approachingSpeed 1 False
     where
-      x1 = x (location ship)
-      y1 = y (location ship)
+      x1 | ship == [] = 0
+         | otherwise = x (location $ head ship)
+      y1 | ship == [] = 0
+         | otherwise = y (location $ head ship)
       x2 = x (location enemyShip)
       y2 = y (location enemyShip)
-      ( ship:_) = [ object | object <- objects level, (gameObjectType object) == Ship ]
-      ( enemyShip:_) = [ object | object <- objects level, objectId object == enemyShipId  ]
-      approachingSpeed = 0              -- make it higher (about 0.05) to make the asteroids try to ram the ship
+      ship = [ object | object <- objects level, (gameObjectType object) == Ship ]
+      ( enemyShip:_ ) = [ object | object <- objects level, objectId object == enemyShipId  ]
+      approachingSpeed = 0.05              -- make it higher (about 0.05) to make the asteroids try to ram the ship
 
 approachingObject :: GameObject -> GameLevel -> [GameObject]
 approachingObject enemyShip level | length closeObjects > 0 = [closestFromList enemyShip closeObjects]
